@@ -11,6 +11,7 @@ TEXTURES = {
     'water': 'assets/water.png',
     'grass': 'assets/grass.png',
     'stone': 'assets/stone.png',
+    'path': 'assets/path.png',
     'sand': 'assets/sand.png',
     'tree': 'assets/tree.png',
     'coal': 'assets/coal.png',
@@ -25,12 +26,13 @@ MATERIAL_NAMES = {
     1: 'water',
     2: 'grass',
     3: 'stone',
-    4: 'sand',
-    5: 'tree',
-    6: 'lava',
-    7: 'coal',
-    8: 'iron',
-    9: 'diamond',
+    4: 'path',
+    5: 'sand',
+    6: 'tree',
+    7: 'lava',
+    8: 'coal',
+    9: 'iron',
+    10: 'diamond',
 }
 
 MATERIAL_IDS = {
@@ -114,14 +116,23 @@ class Env:
     uniform = self._random.uniform
     for x in range(self._area[0]):
       for y in range(self._area[1]):
-        if simplex(x, y, 0, {1: 15, 0.3: 5}) > 0.15:
-          if simplex(x, y, 0, {1: 15, 0.3: 5}) > 0.2 and 0.55 < simplex(x, y, 6, 5):
-            self._terrain[x, y] = MATERIAL_IDS['lava']
-          elif simplex(x, y, 1, 8) > 0.15 and uniform() > 0.8:
+        mountain = simplex(x, y, 0, {1: 15, 0.3: 5})
+        if mountain > 0.15:
+          if False:
+            pass
+          # if simplex(x, y, 0, {1: 15, 0.3: 5}) > 0.2 and 0.55 < simplex(x, y, 6, 5):
+          #   self._terrain[x, y] = MATERIAL_IDS['lava']
+          elif (simplex(x, y, 6, 7) > 0.15 and mountain > 0.3):  # cave
+            self._terrain[x, y] = MATERIAL_IDS['path']
+          elif simplex(2 * x, y / 5, 7, 3) > 0.4:  # horizonal tunnle
+            self._terrain[x, y] = MATERIAL_IDS['path']
+          elif simplex(x / 5, 2 * y, 7, 3) > 0.4:  # vertical tunnle
+            self._terrain[x, y] = MATERIAL_IDS['path']
+          elif simplex(x, y, 1, 8) > 0 and uniform() > 0.8:
             self._terrain[x, y] = MATERIAL_IDS['coal']
-          elif simplex(x, y, 2, 6) > 0.4 and uniform() > 0.6:
+          elif simplex(x, y, 2, 6) > 0.3 and uniform() > 0.6:
             self._terrain[x, y] = MATERIAL_IDS['iron']
-          elif 0.25 < simplex(x, y, 0, {1: 15, 0.3: 5}) < 0.5 and uniform() > 0.99:
+          elif 0.25 < mountain and uniform() > 0.99:
             self._terrain[x, y] = MATERIAL_IDS['diamond']
           else:
             self._terrain[x, y] = MATERIAL_IDS['stone']
@@ -232,7 +243,7 @@ def _view_distance(lhs, rhs):
   return max(abs(l - r) for l, r in zip(lhs, rhs))
 
 
-def test_initial():
+def test_map():
   env = Env(area=(64, 64), view=31, size=1024, seed=0)
   images = []
   for _ in range(4):
@@ -246,7 +257,7 @@ def test_initial():
 
 
 def test_episode():
-  env = Env(area=(64, 64), view=4, size=64, seed=0)
+  env = Env(area=(64, 64), view=4, size=64, seed=17)
   env.reset()
   frames = []
   random = np.random.RandomState(0)
@@ -263,7 +274,9 @@ def test_episode():
   ], 0)
   imageio.imsave('episode.png', grid)
   print('Saved episode.png')
+  imageio.mimsave('episode.mp4', frames)
+  print('Saved episode.mp4')
 
 
 if __name__ == '__main__':
-  test_episode()
+  test_map()
