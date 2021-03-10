@@ -243,9 +243,15 @@ class Env:
 
   @property
   def action_space(self):
-    # noop, left, right, up, down, grab or attack, place stone, place table,
-    # place furnace, make wood pickaxe, make stone pickaxe, make iron pickaxe
     return gym.spaces.Discrete(12)
+
+  @property
+  def action_names(self):
+    return [
+        'noop', 'left', 'right', 'up', 'down', 'grab_or_attack',
+        'place_stone', 'place_table', 'place_furnace',
+        'make_wood_pickaxe', 'make_stone_pickaxe', 'make_iron_pickaxe',
+    ]
 
   def _noise(self, x, y, z, sizes):
     if not isinstance(sizes, dict):
@@ -391,106 +397,3 @@ def _is_free(pos, terrain, objects):
   if terrain[pos[0], pos[1]] not in WALKABLE: return False
   if any(obj.pos == pos for obj in objects): return False
   return True
-
-
-def test_map():
-  env = Env(area=(64, 64), view=31, size=1024, seed=0)
-  images = []
-  for _ in range(4):
-    images.append(env.reset()['image'])
-  grid = np.concatenate([
-      np.concatenate([images[0], images[1]], 1),
-      np.concatenate([images[2], images[3]], 1),
-  ], 0)
-  imageio.imsave('map.png', grid.transpose((1, 0, 2)))
-  print('Saved map.png')
-
-
-def test_episode():
-  import time
-  env = Env(area=(64, 64), view=4, size=64, seed=0)
-  start = time.time()
-  env.reset()
-  print(f'Reset time: {time.time()-start:.2f}s')
-  frames = []
-  random = np.random.RandomState(0)
-  start = time.time()
-  for index in range(100):
-    action = random.randint(0, env.action_space.n)
-    obs, _, _, _ = env.step(action)
-    frames.append(obs['image'])
-  duration = time.time() - start
-  print(f'Step time: {duration:.2f}s ({int(100/duration)} FPS)')
-  cols = int(np.sqrt(len(frames)))
-  rows = int(np.ceil(len(frames) / cols))
-  grid = np.concatenate([
-      np.concatenate([frames[row * cols + col] for col in range(cols)], 1)
-      for row in range(rows)
-  ], 0)
-  imageio.imsave('episode.png', grid)
-  print('Saved episode.png')
-  imageio.mimsave('episode.mp4', frames)
-  print('Saved episode.mp4')
-
-
-def test_keyboard(size=500, recording=True):
-  import pygame
-  pygame.init()
-  env = Env(area=(64, 64), view=4, size=size, seed=0)
-  env.reset()
-  noop = 0
-  keymap = {
-      pygame.K_a: 1,      # left
-      pygame.K_d: 2,      # right
-      pygame.K_w: 3,      # up
-      pygame.K_s: 4,      # down
-      pygame.K_SPACE: 5,  # grab or attack
-      pygame.K_1: 6,      # place stone
-      pygame.K_2: 7,      # place table
-      pygame.K_3: 8,      # place furnace
-      pygame.K_4: 9,      # make wood pickaxe
-      pygame.K_5: 10,     # make stone pickaxe
-      pygame.K_6: 11,     # make iron pickaxe
-  }
-  if recording:
-    frames = []
-  screen = pygame.display.set_mode([size, size])
-  running = True
-  clock = pygame.time.Clock()
-  while running:
-    action = None
-    pygame.event.pump()
-    for event in pygame.event.get():
-      if event.type == pygame.QUIT:
-        running = False
-      elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-        running = False
-      elif event.type == pygame.KEYDOWN and event.key in keymap.keys():
-        action = keymap[event.key]
-    if action is None:
-      pressed = pygame.key.get_pressed()
-      for key, action in keymap.items():
-        if pressed[key]:
-          break
-      else:
-        action = noop
-    obs, _, _, _ = env.step(action)
-    if action > 4:
-      print('Inventory:', ', '.join(sorted(
-          f'{k}: {v}' for k, v in env._player.inventory.items())))
-      print('Health:', env._player.health)
-    if recording:
-      frames.append(obs['image'].transpose((1, 0, 2)))
-    surface = pygame.surfarray.make_surface(obs['image'])
-    screen.blit(surface, (0, 0))
-    pygame.display.flip()
-    clock.tick(3)  # fps
-  pygame.quit()
-  if recording:
-    imageio.mimsave('recording.mp4', frames)
-
-
-if __name__ == '__main__':
-  # test_map()
-  # test_episode()
-  test_keyboard()

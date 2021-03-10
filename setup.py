@@ -4,15 +4,16 @@ import pathlib
 
 setuptools.setup(
     name='crafter',
-    version='1.0.0',
-    description='Open world survival environment for reinforcement learning.',
+    version='0.2.0',
+    description='Open world survival game for reinforcement learning.',
     url='http://github.com/danijar/crafter',
     long_description=pathlib.Path('README.md').read_text(),
     long_description_content_type='text/markdown',
-    install_requires=['numpy', 'imageio', 'gym', 'scikit-image', 'opensimplex'],
-    extras_require={'human': ['pygame']},
     packages=['crafter'],
     package_data={'crafter': ['assets/*']},
+    entry_points={'console_scripts': ['crafter=crafter:run_gui']},
+    install_requires=['numpy', 'imageio', 'gym', 'scikit-image', 'opensimplex'],
+    extras_require={'gui': ['pygame']},
     classifiers=[
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: MIT License',
