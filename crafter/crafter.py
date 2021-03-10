@@ -18,6 +18,8 @@ TEXTURES = {
     'iron': 'assets/iron.png',
     'diamond': 'assets/diamond.png',
     'lava': 'assets/lava.png',
+    'table': 'assets/table.png',
+    'furnace': 'assets/furnace.png',
     'player-left': 'assets/player-left.png',
     'player-right': 'assets/player-right.png',
     'player-up': 'assets/player-up.png',
@@ -36,6 +38,8 @@ MATERIAL_NAMES = {
     8: 'coal',
     9: 'iron',
     10: 'diamond',
+    11: 'table',
+    12: 'furnace',
 }
 
 MATERIAL_IDS = {
@@ -54,6 +58,11 @@ class Player:
   def __init__(self, pos):
     self.pos = pos
     self.face = (0, 1)
+    self.inventory = {
+        'wood': 0, 'stone': 0, 'coal': 0, 'iron': 0, 'diamond': 0,
+        'wood_pickaxe': 0, 'stone_pickaxe': 0, 'iron_pickaxe': 0,
+        'wood_sword': 0, 'stone_sword': 0, 'iron_sword': 0,
+    }
 
   @property
   def texture(self):
@@ -65,30 +74,76 @@ class Player:
     }[self.face]
 
   def update(self, terrain, objects, action):
-    if 0 <= action <= 3:
+    if action == 0:
+      return  # noop
+    if 1 <= action <= 4:
       # left, right, up, down
       direction = [(-1, 0), (+1, 0), (0, -1), (0, +1)]
-      self.face = direction[action]
+      self.face = direction[action - 1]
       target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
       if _is_free(target, terrain, objects):
         self.pos = target
-    if action == 4:  # grab
-      target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
+      return
+    target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
+    empty = MATERIAL_NAMES[terrain[target]] in ('grass', 'sand', 'path')
+    water = MATERIAL_NAMES[terrain[target]] in ('water',)
+    if action == 5:  # grab
       if terrain[target] == MATERIAL_IDS['tree']:
         terrain[target] = MATERIAL_IDS['grass']
+        self.inventory['wood'] += 1
       elif terrain[target] == MATERIAL_IDS['stone']:
         terrain[target] = MATERIAL_IDS['path']
+        self.inventory['stone'] += 1
       elif terrain[target] == MATERIAL_IDS['coal']:
         terrain[target] = MATERIAL_IDS['path']
+        self.inventory['coal'] += 1
       elif terrain[target] == MATERIAL_IDS['iron']:
         terrain[target] = MATERIAL_IDS['path']
+        self.inventory['iron'] += 1
       elif terrain[target] == MATERIAL_IDS['diamond']:
         terrain[target] = MATERIAL_IDS['path']
-    if action == 5:  # place
-      target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
-      if MATERIAL_NAMES[terrain[target]] in ('grass', 'sand', 'path', 'water'):
+        self.inventory['diamond'] += 1
+      return
+    if action == 6:  # attack
+      return  # not implemented yet
+    if action == 7:  # place stone
+      if self.inventory['stone'] > 0 and (empty or water):
         terrain[target] = MATERIAL_IDS['stone']
-
+        self.inventory['stone'] -= 1
+      return
+    if action == 8:  # place table
+      if self.inventory['wood'] > 0 and empty:
+        terrain[target] = MATERIAL_IDS['table']
+        self.inventory['wood'] -= 1
+      return
+    if action == 9:  # place furnace
+      if self.inventory['stone'] > 0 and empty:
+        terrain[target] = MATERIAL_IDS['furnace']
+        self.inventory['stone'] -= 1
+      return
+    nearby = terrain[
+        self.pos[0] - 2: self.pos[0] + 2,
+        self.pos[1] - 2: self.pos[1] + 2]
+    table = (nearby == MATERIAL_IDS['table']).any()
+    furnace = (nearby == MATERIAL_IDS['furnace']).any()
+    if action == 10:  # make wood pickaxe
+      if self.inventory['wood'] > 0 and table:
+        self.inventory['wood'] -= 1
+        self.inventory['wood_pickaxe'] += 1
+    if action == 11:  # make stone pickaxe
+      wood = self.inventory['wood']
+      stone = self.inventory['stone']
+      if wood > 0 and stone > 0 and table:
+        self.inventory['wood'] -= 1
+        self.inventory['stone'] -= 1
+        self.inventory['stone_pickaxe'] += 1
+    if action == 12:  # make iron pickaxe
+      wood = self.inventory['wood']
+      iron = self.inventory['iron']
+      if wood and iron and furnace:
+        self.inventory['wood'] -= 1
+        self.inventory['stone'] -= 1
+        self.inventory['iron_pickaxe'] += 1
 
 
 class Zombie:
@@ -134,8 +189,9 @@ class Env:
 
   @property
   def action_space(self):
-    # left, right, up, down, grab, place, noop
-    return gym.spaces.Discrete(7)
+    # noop, left, right, up, down, grab, attack, place stone, place table,
+    # place furnace, make wood pickaxe, make stone pickaxe, make iron pickaxe
+    return gym.spaces.Discrete(13)
 
   def _noise(self, x, y, z, sizes):
     if not isinstance(sizes, dict):
@@ -299,13 +355,13 @@ def test_map():
       np.concatenate([images[0], images[1]], 1),
       np.concatenate([images[2], images[3]], 1),
   ], 0)
-  imageio.imsave('initial.png', grid)
-  print('Saved initial.png')
+  imageio.imsave('map.png', grid.transpose((1, 0, 2)))
+  print('Saved map.png')
 
 
 def test_episode():
   import time
-  env = Env(area=(64, 64), view=4, size=64, seed=17)
+  env = Env(area=(64, 64), view=4, size=64, seed=0)
   start = time.time()
   env.reset()
   print(f'Reset time: {time.time()-start:.2f}s')
@@ -330,15 +386,28 @@ def test_episode():
   print('Saved episode.mp4')
 
 
-def test_keyboard(size=500):
+def test_keyboard(size=500, recording=True):
   import pygame
   pygame.init()
   env = Env(area=(64, 64), view=4, size=size, seed=0)
   env.reset()
+  noop = 0
   keymap = {
-      pygame.K_a: 0, pygame.K_d: 1, pygame.K_w: 2, pygame.K_s: 3,
-      pygame.K_SPACE: 4, pygame.K_RETURN: 5}
-  noop = 6
+      pygame.K_a: 1,       # left
+      pygame.K_d: 2,       # right
+      pygame.K_w: 3,       # up
+      pygame.K_s: 4,       # down
+      pygame.K_SPACE: 5,   # grab
+      pygame.K_RETURN: 6,  # attack
+      pygame.K_1: 7,       # place stone
+      pygame.K_2: 8,       # place table
+      pygame.K_3: 9,       # place furnace
+      pygame.K_4: 10,      # make wood pickaxe
+      pygame.K_5: 11,      # make stone pickaxe
+      pygame.K_6: 12,      # make iron pickaxe
+  }
+  if recording:
+    frames = []
   screen = pygame.display.set_mode([size, size])
   running = True
   clock = pygame.time.Clock()
@@ -360,12 +429,17 @@ def test_keyboard(size=500):
       else:
         action = noop
     obs, _, _, _ = env.step(action)
+    if action > 4:
+      print(env._player.inventory)
+    if recording:
+      frames.append(obs['image'].transpose((1, 0, 2)))
     surface = pygame.surfarray.make_surface(obs['image'])
     screen.blit(surface, (0, 0))
     pygame.display.flip()
     clock.tick(3)  # fps
   pygame.quit()
-
+  if recording:
+    imageio.mimsave('recording.mp4', frames)
 
 
 if __name__ == '__main__':
