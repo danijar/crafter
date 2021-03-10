@@ -333,18 +333,22 @@ def test_keyboard(size=500):
   running = True
   clock = pygame.time.Clock()
   while running:
+    action = None
     pygame.event.pump()
     for event in pygame.event.get():
-      if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+      if event.type == pygame.QUIT:
         running = False
-      elif event.type == pygame.QUIT:
+      elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
         running = False
-    pressed = pygame.key.get_pressed()
-    for key, action in keymap.items():
-      if pressed[key]:
-        break
-    else:
-      action = noop
+      elif event.type == pygame.KEYDOWN and event.key in keymap.keys():
+        action = keymap[event.key]
+    if action is None:
+      pressed = pygame.key.get_pressed()
+      for key, action in keymap.items():
+        if pressed[key]:
+          break
+      else:
+        action = noop
     obs, _, _, _ = env.step(action)
     surface = pygame.surfarray.make_surface(obs['image'])
     screen.blit(surface, (0, 0))
