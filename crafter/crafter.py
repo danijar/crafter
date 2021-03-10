@@ -89,7 +89,13 @@ class Player:
     target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
     empty = MATERIAL_NAMES[terrain[target]] in ('grass', 'sand', 'path')
     water = MATERIAL_NAMES[terrain[target]] in ('water',)
-    if action == 5:  # grab
+    if action == 5:  # grab or attack
+      for obj in objects:
+        if obj.pos == target and hasattr(obj, 'health'):
+          obj.health -= 1
+          if isinstance(obj, Cow) and obj.health <= 0:
+            self.health = min(self.health + 1, 3)  # food
+          return
       pickaxe = max(
           1 if self.inventory['wood_pickaxe'] else 0,
           2 if self.inventory['stone_pickaxe'] else 0,
@@ -109,13 +115,6 @@ class Player:
       elif terrain[target] == MATERIAL_IDS['diamond'] and pickaxe > 2:
         terrain[target] = MATERIAL_IDS['path']
         self.inventory['diamond'] += 1
-      return
-    if action == 6:  # attack
-      for obj in objects:
-        if obj.pos == target and hasattr(obj, 'health'):
-          obj.health -= 1
-        if isinstance(obj, Cow) and obj.health <= 0:
-          self.health = min(self.health + 1, 3)  # food
       return
     if action == 7:  # place stone
       if self.inventory['stone'] > 0 and (empty or water):
@@ -197,7 +196,7 @@ class Zombie:
         (self.pos[0] - player.pos[0]) ** 2 +
         (self.pos[1] - player.pos[1]) ** 2)
     if dist <= 1:
-      if self._near and self._random.uniform() > 0.5:
+      if self._near and self._random.uniform() > 0.7:
         player.health -= 1
       self._near = True
     else:
@@ -236,16 +235,17 @@ class Env:
 
   @property
   def observation_space(self):
-    image = gym.spaces.Box(0, 255, (self._size, self._size, 3), dtype=np.uint8),
-    coord = gym.spaces.Box([0, 0], self._area, dtype=np.int32),
-    spaces = {'image': image, 'coord': coord}
+    shape = (self._size, self._size, 3)
+    spaces = {'image': gym.spaces.Box(0, 255, shape, np.uint8)}
+    for key in list(Player((0, 0)).inventory.keys()) + ['health']:
+      spaces[key] = gym.spaces.Box(0, 255, (), np.uint8)
     return gym.spaces.Dict(spaces)
 
   @property
   def action_space(self):
-    # noop, left, right, up, down, grab, attack, place stone, place table,
+    # noop, left, right, up, down, grab or attack, place stone, place table,
     # place furnace, make wood pickaxe, make stone pickaxe, make iron pickaxe
-    return gym.spaces.Discrete(13)
+    return gym.spaces.Discrete(12)
 
   def _noise(self, x, y, z, sizes):
     if not isinstance(sizes, dict):
@@ -347,10 +347,8 @@ class Env:
     return canvas
 
   def _obs(self):
-    obs = {
-        'image': self.render(),
-        'player': self._player.pos,
-    }
+    obs = {'image': self.render(), 'health': self._player.health}
+    obs.update(self._player.inventory)
     return obs
 
   def _draw(self, canvas, pos, texture):
@@ -442,18 +440,17 @@ def test_keyboard(size=500, recording=True):
   env.reset()
   noop = 0
   keymap = {
-      pygame.K_a: 1,       # left
-      pygame.K_d: 2,       # right
-      pygame.K_w: 3,       # up
-      pygame.K_s: 4,       # down
-      pygame.K_SPACE: 5,   # grab
-      pygame.K_RETURN: 6,  # attack
-      pygame.K_1: 7,       # place stone
-      pygame.K_2: 8,       # place table
-      pygame.K_3: 9,       # place furnace
-      pygame.K_4: 10,      # make wood pickaxe
-      pygame.K_5: 11,      # make stone pickaxe
-      pygame.K_6: 12,      # make iron pickaxe
+      pygame.K_a: 1,      # left
+      pygame.K_d: 2,      # right
+      pygame.K_w: 3,      # up
+      pygame.K_s: 4,      # down
+      pygame.K_SPACE: 5,  # grab or attack
+      pygame.K_1: 6,      # place stone
+      pygame.K_2: 7,      # place table
+      pygame.K_3: 8,      # place furnace
+      pygame.K_4: 9,      # make wood pickaxe
+      pygame.K_5: 10,     # make stone pickaxe
+      pygame.K_6: 11,     # make iron pickaxe
   }
   if recording:
     frames = []
