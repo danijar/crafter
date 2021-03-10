@@ -70,7 +70,7 @@ class Zombie:
 
 class Env:
 
-  def __init__(self, area=(64, 64), view=31, size=1024, seed=2):
+  def __init__(self, area=(64, 64), view=5, size=64, seed=2):
     self._area = area
     self._view = view
     self._size = size
@@ -147,7 +147,7 @@ class Env:
 
   def step(self, action):
     for obj in self._objects:
-      obj.update(self._objects, action)
+      obj.update(self._terrain, self._objects, action)
     obs = self._obs()
     reward = self.reward()
     done = False
@@ -158,24 +158,25 @@ class Env:
     return 0
 
   def render(self):
-    image = np.zeros((self._size, self._size, 3), np.uint8)
-    for i in range(2 * self._view + 1):
-      for j in range(2 * self._view + 1):
+    canvas = np.zeros((self._size, self._size, 3), np.uint8)
+    for i in range(2 * self._view + 2):
+      for j in range(2 * self._view + 2):
         x = self._player.pos[0] + i - self._view
-        y = self._player.pos[0] + j - self._view
+        y = self._player.pos[1] + j - self._view
         if not (0 <= x < self._area[0] and 0 <= y < self._area[1]):
           continue
-        name = MATERIAL_NAMES[self._terrain[x, y]]
-        texture = self._textures[name]
-        self._draw(image, (x, y), texture)
-        # image[i * self._grid: (i + 1) * self._grid, j * self._grid: (j + 1) * self._grid] = texture
+        texture = self._textures[MATERIAL_NAMES[self._terrain[x, y]]]
+        self._draw(canvas, (x, y), texture)
     for obj in self._objects:
-      visible = _view_distance(obj.pos, self._player.pos) <= self._view
-      if not visible:
-        continue
       texture = self._textures[type(obj).__name__.lower()]
-      self._draw(image, obj.pos, texture)
-    return image
+      self._draw(canvas, obj.pos, texture)
+    used = self._grid * (2 * self._view + 1)
+    # if used != self._size:
+    #   canvas = skimage.transform.resize(
+    #       canvas[:used, :used], (self._size, self._size),
+    #       order=0, anti_aliasing=False,
+    #       preserve_range=True).astype(np.uint8)
+    return canvas
 
   def _obs(self):
     obs = {
@@ -185,14 +186,14 @@ class Env:
     return obs
 
   def _draw(self, canvas, pos, texture):
-    if pos[0] < 0 or pos[0] >= self._area[0]:
-      return
-    if pos[1] < 0 or pos[1] >= self._area[1]:
-      return
-    w = canvas.shape[0] // self._area[0]
-    h = canvas.shape[1] // self._area[1]
-    x = w * pos[0]
-    y = h * pos[1]
+    left = self._player.pos[0] - self._view
+    top = self._player.pos[1] - self._view
+    x = self._grid * (pos[0] - left)
+    y = self._grid * (pos[1] - top)
+    w = texture.shape[0]
+    h = texture.shape[1]
+    if not (0 <= x and x + w <= canvas.shape[0]): return
+    if not (0 <= y and y + h <= canvas.shape[1]): return
     if texture.shape[-1] == 4:
       alpha = texture[..., 3:].astype(np.float32) / 255
       texture = texture[..., :3].astype(np.float32) / 255
@@ -212,17 +213,15 @@ class Env:
       image = imageio.imread(filename)
       image = skimage.transform.resize(
           image, (self._grid, self._grid),
-          order=0,
-          anti_aliasing=False,
-          preserve_range=True)
+          order=0, anti_aliasing=False, preserve_range=True).astype(np.uint8)
       textures[name] = image
     return textures
 
 
 def _is_free(pos, terrain, objects):
-  if pos[0] < 0 or pos[0] >= terrain[0]:
+  if pos[0] < 0 or pos[0] >= terrain.shape[0]:
     return False
-  if pos[1] < 0 or pos[1] >= terrain[1]:
+  if pos[1] < 0 or pos[1] >= terrain.shape[1]:
     return False
   if any(obj.pos == pos for obj in objects):
     return False
@@ -234,7 +233,6 @@ def _view_distance(lhs, rhs):
 
 
 def test_initial():
-  import matplotlib.pyplot as plt
   env = Env(area=(64, 64), view=31, size=1024, seed=0)
   images = []
   for _ in range(4):
@@ -248,30 +246,24 @@ def test_initial():
 
 
 def test_episode():
-  import matplotlib.pyplot as plt
-  env = Env()
+  env = Env(area=(64, 64), view=4, size=64, seed=0)
   env.reset()
   frames = []
-  rewards = []
   random = np.random.RandomState(0)
   for index in range(100):
     action = random.randint(0, env.action_space.n)
-    _, reward, _, _ = env.step(action)
+    env.step(action)
     image = env.render()
     frames.append(image)
-    rewards.append(reward)
   cols = int(np.sqrt(len(frames)))
   rows = int(np.ceil(len(frames) / cols))
-  fig, axs = plt.subplots(cols, rows, figsize=(rows, cols))
-  axs = axs.flatten()
-  for t, (ax, frame, r) in enumerate(zip(axs, frames, rewards)):
-    ax.set_title(f'r={r:.2f}')
-    ax.imshow(frame)
-    ax.axis('off')
-  fig.tight_layout()
-  fig.savefig('episode.png')
+  grid = np.concatenate([
+      np.concatenate([frames[row * cols + col] for col in range(cols)], 1)
+      for row in range(rows)
+  ], 0)
+  imageio.imsave('episode.png', grid)
   print('Saved episode.png')
 
 
 if __name__ == '__main__':
-  test_initial()
+  test_episode()
