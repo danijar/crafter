@@ -39,6 +39,11 @@ MATERIAL_IDS = {
     name: id_ for id_, name in MATERIAL_NAMES.items()
 }
 
+WALKABLE = {
+    MATERIAL_IDS['grass'],
+    MATERIAL_IDS['path'],
+}
+
 
 class Player:
 
@@ -120,8 +125,6 @@ class Env:
         if mountain > 0.15:
           if False:
             pass
-          # if simplex(x, y, 0, {1: 15, 0.3: 5}) > 0.2 and 0.55 < simplex(x, y, 6, 5):
-          #   self._terrain[x, y] = MATERIAL_IDS['lava']
           elif (simplex(x, y, 6, 7) > 0.15 and mountain > 0.3):  # cave
             self._terrain[x, y] = MATERIAL_IDS['path']
           elif simplex(2 * x, y / 5, 7, 3) > 0.4:  # horizonal tunnle
@@ -132,8 +135,10 @@ class Env:
             self._terrain[x, y] = MATERIAL_IDS['coal']
           elif simplex(x, y, 2, 6) > 0.3 and uniform() > 0.6:
             self._terrain[x, y] = MATERIAL_IDS['iron']
-          elif 0.25 < mountain and uniform() > 0.99:
+          elif mountain > 0.25 and uniform() > 0.99:
             self._terrain[x, y] = MATERIAL_IDS['diamond']
+          elif mountain > 0.3 and simplex(x, y, 6, 5) > 0.4:
+            self._terrain[x, y] = MATERIAL_IDS['lava']
           else:
             self._terrain[x, y] = MATERIAL_IDS['stone']
         elif 0.25 < simplex(x, y, 3, 15) <= 0.35 and simplex(x, y, 4, 9) > -0.2:
@@ -147,11 +152,10 @@ class Env:
             self._terrain[x, y] = MATERIAL_IDS['grass']
     self._player = Player((self._area[0] // 2, self._area[1] // 2))
     self._objects = [self._player]
-    flat = (MATERIAL_IDS['grass'], MATERIAL_IDS['stone'])
     for x in range(self._area[0]):
       for y in range(self._area[1]):
         start = _view_distance((x, y), self._player.pos) <= 4
-        if self._terrain[x, y] in flat and not start:
+        if self._terrain[x, y] in WALKABLE and not start:
           if uniform() > 0.993:
             self._objects.append(Zombie((x, y), self._random))
     return self._obs()
@@ -230,12 +234,10 @@ class Env:
 
 
 def _is_free(pos, terrain, objects):
-  if pos[0] < 0 or pos[0] >= terrain.shape[0]:
-    return False
-  if pos[1] < 0 or pos[1] >= terrain.shape[1]:
-    return False
-  if any(obj.pos == pos for obj in objects):
-    return False
+  if not (0 < pos[0] <= terrain.shape[0]): return False
+  if not (0 < pos[1] <= terrain.shape[1]): return False
+  if terrain[pos[0], pos[1]] not in WALKABLE: return False
+  if any(obj.pos == pos for obj in objects): return False
   return True
 
 
