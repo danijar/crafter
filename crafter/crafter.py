@@ -183,6 +183,7 @@ class Zombie:
     self.pos = pos
     self.health = 1
     self._random = random
+    self._near = False
 
   @property
   def texture(self):
@@ -195,6 +196,12 @@ class Zombie:
     dist = np.sqrt(
         (self.pos[0] - player.pos[0]) ** 2 +
         (self.pos[1] - player.pos[1]) ** 2)
+    if dist <= 1:
+      if self._near and self._random.uniform() > 0.5:
+        player.health -= 1
+      self._near = True
+    else:
+      self._near = False
     if dist <= 4:
       if abs(self.pos[0] - player.pos[0]) > abs(self.pos[1] - player.pos[1]):
         direction = (-np.sign(self.pos[0] - player.pos[0]), 0)
