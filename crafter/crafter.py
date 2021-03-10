@@ -109,7 +109,10 @@ class Player:
         self.inventory['diamond'] += 1
       return
     if action == 6:  # attack
-      return  # not implemented yet
+      for obj in objects:
+        if obj.pos == target and hasattr(obj, 'health'):
+          obj.health -= 1
+      return
     if action == 7:  # place stone
       if self.inventory['stone'] > 0 and (empty or water):
         terrain[target] = MATERIAL_IDS['stone']
@@ -154,6 +157,7 @@ class Zombie:
 
   def __init__(self, pos, random):
     self.pos = pos
+    self.health = 3
     self._random = random
 
   @property
@@ -161,7 +165,8 @@ class Zombie:
     return 'zombie'
 
   def update(self, terrain, objects, action):
-    return  # TODO
+    if self.health <= 0:
+      del objects[objects.index(self)]
     x = self.pos[0] + self._random.randint(-1, 2)
     y = self.pos[1] + self._random.randint(-1, 2)
     if _is_free((x, y), terrain, objects):
