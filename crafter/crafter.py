@@ -18,7 +18,10 @@ TEXTURES = {
     'iron': 'assets/iron.png',
     'diamond': 'assets/diamond.png',
     'lava': 'assets/lava.png',
-    'player': 'assets/player.png',
+    'player-left': 'assets/player-left.png',
+    'player-right': 'assets/player-right.png',
+    'player-up': 'assets/player-up.png',
+    'player-down': 'assets/player-down.png',
     'zombie': 'assets/zombie.png',
 }
 
@@ -42,6 +45,7 @@ MATERIAL_IDS = {
 WALKABLE = {
     MATERIAL_IDS['grass'],
     MATERIAL_IDS['path'],
+    MATERIAL_IDS['sand'],
 }
 
 
@@ -49,15 +53,23 @@ class Player:
 
   def __init__(self, pos):
     self.pos = pos
+    self.face = (0, 1)
+
+  @property
+  def texture(self):
+    return {
+        (-1, 0): 'player-left',
+        (+1, 0): 'player-right',
+        (0, -1): 'player-up',
+        (0, +1): 'player-down',
+    }[self.face]
 
   def update(self, terrain, objects, action):
     if 0 <= action <= 3:
-      pos = [
-          (self.pos[0] - 1, self.pos[1]),  # left
-          (self.pos[0] + 1, self.pos[1]),  # right
-          (self.pos[0], self.pos[1] - 1),  # up
-          (self.pos[0], self.pos[1] + 1),  # down
-          ][action]
+      # left, right, up, down
+      direction = [(-1, 0), (+1, 0), (0, -1), (0, +1)]
+      self.face = direction[action]
+      pos = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
       if _is_free(pos, terrain, objects):
         self.pos = pos
 
@@ -67,6 +79,10 @@ class Zombie:
   def __init__(self, pos, random):
     self.pos = pos
     self._random = random
+
+  @property
+  def texture(self):
+    return 'zombie'
 
   def update(self, terrain, objects, action):
     x = self.pos[0] + self._random.randint(-1, 2)
@@ -113,19 +129,24 @@ class Env:
   def reset(self):
     self._episode += 1
     self._terrain[:] = 0
+    center = self._area[0] // 2, self._area[1] // 2
     self._simplex = opensimplex.OpenSimplex(
         seed=hash((self._seed, self._episode)))
     self._random = np.random.RandomState(
         seed=np.uint32(hash((self._seed, self._episode))))
     simplex = self._noise
     uniform = self._random.uniform
+
     for x in range(self._area[0]):
       for y in range(self._area[1]):
-        mountain = simplex(x, y, 0, {1: 15, 0.3: 5})
-        if mountain > 0.15:
-          if False:
-            pass
-          elif (simplex(x, y, 6, 7) > 0.15 and mountain > 0.3):  # cave
+        start = 4 - np.sqrt((x - center[0]) ** 2 + (y - center[1]) ** 2)
+        start += 2 * simplex(x, y, 8, 3)
+        start = 1 / (1 + np.exp(-start))
+        mountain = simplex(x, y, 0, {1: 15, 0.3: 5}) - 3 * start
+        if start > 0.5:
+          self._terrain[x, y] = MATERIAL_IDS['grass']
+        elif mountain > 0.15:
+          if (simplex(x, y, 6, 7) > 0.15 and mountain > 0.3):  # cave
             self._terrain[x, y] = MATERIAL_IDS['path']
           elif simplex(2 * x, y / 5, 7, 3) > 0.4:  # horizonal tunnle
             self._terrain[x, y] = MATERIAL_IDS['path']
@@ -150,14 +171,15 @@ class Env:
             self._terrain[x, y] = MATERIAL_IDS['tree']
           else:
             self._terrain[x, y] = MATERIAL_IDS['grass']
-    self._player = Player((self._area[0] // 2, self._area[1] // 2))
+
+    self._player = Player(center)
     self._objects = [self._player]
     for x in range(self._area[0]):
       for y in range(self._area[1]):
-        start = _view_distance((x, y), self._player.pos) <= 4
-        if self._terrain[x, y] in WALKABLE and not start:
+        if self._terrain[x, y] in WALKABLE:
           if uniform() > 0.993:
             self._objects.append(Zombie((x, y), self._random))
+
     return self._obs()
 
   def step(self, action):
@@ -183,7 +205,7 @@ class Env:
         texture = self._textures[MATERIAL_NAMES[self._terrain[x, y]]]
         self._draw(canvas, (x, y), texture)
     for obj in self._objects:
-      texture = self._textures[type(obj).__name__.lower()]
+      texture = self._textures[obj.texture]
       self._draw(canvas, obj.pos, texture)
     used = self._grid * (2 * self._view + 1)
     # if used != self._size:
@@ -234,8 +256,8 @@ class Env:
 
 
 def _is_free(pos, terrain, objects):
-  if not (0 < pos[0] <= terrain.shape[0]): return False
-  if not (0 < pos[1] <= terrain.shape[1]): return False
+  if not (0 <= pos[0] < terrain.shape[0]): return False
+  if not (0 <= pos[1] < terrain.shape[1]): return False
   if terrain[pos[0], pos[1]] not in WALKABLE: return False
   if any(obj.pos == pos for obj in objects): return False
   return True
@@ -282,3 +304,4 @@ def test_episode():
 
 if __name__ == '__main__':
   test_map()
+  test_episode()
