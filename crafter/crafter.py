@@ -11,6 +11,7 @@ TEXTURES = {
     'water': 'assets/water.png',
     'grass': 'assets/grass.png',
     'stone': 'assets/stone.png',
+    'sand': 'assets/sand.png',
     'tree': 'assets/tree.png',
     'coal': 'assets/coal.png',
     'iron': 'assets/iron.png',
@@ -23,10 +24,11 @@ MATERIAL_NAMES = {
     1: 'water',
     2: 'grass',
     3: 'stone',
-    4: 'tree',
-    5: 'coal',
-    6: 'iron',
-    7: 'diamond',
+    4: 'sand',
+    5: 'tree',
+    6: 'coal',
+    7: 'iron',
+    8: 'diamond',
 }
 
 MATERIAL_IDS = {
@@ -119,10 +121,12 @@ class Env:
             self._terrain[x, y] = MATERIAL_IDS['diamond']
           else:
             self._terrain[x, y] = MATERIAL_IDS['stone']
-        elif simplex(x, y, 3, {1: 15}) > 0.3:
+        elif 0.25 < simplex(x, y, 3, 15) <= 0.35 and simplex(x, y, 4, 9) > -0.2:
+          self._terrain[x, y] = MATERIAL_IDS['sand']
+        elif simplex(x, y, 3, 15) > 0.3:
           self._terrain[x, y] = MATERIAL_IDS['water']
         else:  # grass
-          if simplex(x, y, 3, 7) > 0 and uniform() > 0.8:
+          if simplex(x, y, 5, 7) > 0 and uniform() > 0.8:
             self._terrain[x, y] = MATERIAL_IDS['tree']
           else:
             self._terrain[x, y] = MATERIAL_IDS['grass']
