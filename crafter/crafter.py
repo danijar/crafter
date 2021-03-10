@@ -1,3 +1,5 @@
+import pathlib
+
 import gym
 import imageio
 import numpy as np
@@ -125,7 +127,13 @@ class Env:
           else:
             self._terrain[x, y] = MATERIAL_IDS['grass']
     self._player = Player((self._area[0] // 2, self._area[1] // 2))
-    self._objects = []
+    self._objects = [self._player]
+    flat = (MATERIAL_IDS['grass'], MATERIAL_IDS['stone'])
+    for x in range(self._area[0]):
+      for y in range(self._area[1]):
+        if self._terrain[x, y] in flat:
+          if uniform() > 0.993:
+            self._objects.append(Zombie((x, y), self._random))
     return self._obs()
 
   def step(self, action):
@@ -150,12 +158,14 @@ class Env:
           continue
         name = MATERIAL_NAMES[self._terrain[x, y]]
         texture = self._textures[name]
-        image[i * self._grid: (i + 1) * self._grid, j * self._grid: (j + 1) * self._grid] = texture
-    # for obj in self._objects:
-    #   visible = _view_distance(obj.pos, self._player.pos) <= self._view
-    #   if partial and not visible:
-    #     continue
-    #   self._draw_pos(image, obj.pos, obj.color)
+        self._draw(image, (x, y), texture)
+        # image[i * self._grid: (i + 1) * self._grid, j * self._grid: (j + 1) * self._grid] = texture
+    for obj in self._objects:
+      visible = _view_distance(obj.pos, self._player.pos) <= self._view
+      if not visible:
+        continue
+      texture = self._textures[type(obj).__name__.lower()]
+      self._draw(image, obj.pos, texture)
     return image
 
   def _obs(self):
@@ -165,14 +175,7 @@ class Env:
     }
     return obs
 
-  # def _random_pos(self, blocked):
-  #   while True:
-  #     x = self._random.randint(0, self._grid[0])
-  #     y = self._random.randint(0, self._grid[1])
-  #     if (x, y) not in blocked:
-  #       return (x, y)
-
-  def _draw_pos(self, canvas, pos, texture):
+  def _draw(self, canvas, pos, texture):
     if pos[0] < 0 or pos[0] >= self._area[0]:
       return
     if pos[1] < 0 or pos[1] >= self._area[1]:
@@ -181,19 +184,28 @@ class Env:
     h = canvas.shape[1] // self._area[1]
     x = w * pos[0]
     y = h * pos[1]
-    canvas[x: x + w, y: y + h] = texture
+    if texture.shape[-1] == 4:
+      alpha = texture[..., 3:].astype(np.float32) / 255
+      texture = texture[..., :3].astype(np.float32) / 255
+      current = canvas[x: x + w, y: y + h].astype(np.float32) / 255
+      blended = alpha * texture + (1 - alpha) * current
+      result = (255 * blended).astype(np.uint8)
+    else:
+      result = texture
+    canvas[x: x + w, y: y + h] = result
 
 
   def _load_textures(self):
     textures = {}
     resolution = (self._size // 2 * self._view + 1)
     for name, filename in TEXTURES.items():
+      filename = pathlib.Path(__file__).parent / filename
       image = imageio.imread(filename)
       image = skimage.transform.resize(
           image, (self._grid, self._grid),
           order=0,
           anti_aliasing=False,
-          preserve_range=True)[:, :, :3]
+          preserve_range=True)
       textures[name] = image
     return textures
 
