@@ -16,6 +16,7 @@ TEXTURES = {
     'coal': 'assets/coal.png',
     'iron': 'assets/iron.png',
     'diamond': 'assets/diamond.png',
+    'lava': 'assets/lava.png',
     'player': 'assets/player.png',
     'zombie': 'assets/zombie.png',
 }
@@ -26,9 +27,10 @@ MATERIAL_NAMES = {
     3: 'stone',
     4: 'sand',
     5: 'tree',
-    6: 'coal',
-    7: 'iron',
-    8: 'diamond',
+    6: 'lava',
+    7: 'coal',
+    8: 'iron',
+    9: 'diamond',
 }
 
 MATERIAL_IDS = {
@@ -113,7 +115,9 @@ class Env:
     for x in range(self._area[0]):
       for y in range(self._area[1]):
         if simplex(x, y, 0, {1: 15, 0.3: 5}) > 0.15:
-          if simplex(x, y, 1, 8) > 0.15 and uniform() > 0.8:
+          if simplex(x, y, 0, {1: 15, 0.3: 5}) > 0.2 and 0.55 < simplex(x, y, 6, 5):
+            self._terrain[x, y] = MATERIAL_IDS['lava']
+          elif simplex(x, y, 1, 8) > 0.15 and uniform() > 0.8:
             self._terrain[x, y] = MATERIAL_IDS['coal']
           elif simplex(x, y, 2, 6) > 0.4 and uniform() > 0.6:
             self._terrain[x, y] = MATERIAL_IDS['iron']
@@ -135,7 +139,8 @@ class Env:
     flat = (MATERIAL_IDS['grass'], MATERIAL_IDS['stone'])
     for x in range(self._area[0]):
       for y in range(self._area[1]):
-        if self._terrain[x, y] in flat:
+        start = _view_distance((x, y), self._player.pos) <= 4
+        if self._terrain[x, y] in flat and not start:
           if uniform() > 0.993:
             self._objects.append(Zombie((x, y), self._random))
     return self._obs()
