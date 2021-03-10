@@ -24,6 +24,7 @@ TEXTURES = {
     'player-right': 'assets/player-right.png',
     'player-up': 'assets/player-up.png',
     'player-down': 'assets/player-down.png',
+    'cow': 'assets/cow.png',
     'zombie': 'assets/zombie.png',
 }
 
@@ -58,6 +59,7 @@ class Player:
   def __init__(self, pos):
     self.pos = pos
     self.face = (0, 1)
+    self.health = 3
     self.inventory = {
         'wood': 0, 'stone': 0, 'coal': 0, 'iron': 0, 'diamond': 0,
         'wood_pickaxe': 0, 'stone_pickaxe': 0, 'iron_pickaxe': 0,
@@ -112,6 +114,8 @@ class Player:
       for obj in objects:
         if obj.pos == target and hasattr(obj, 'health'):
           obj.health -= 1
+        if isinstance(obj, Cow) and obj.health <= 0:
+          self.health = min(self.health + 1, 3)  # food
       return
     if action == 7:  # place stone
       if self.inventory['stone'] > 0 and (empty or water):
@@ -153,11 +157,31 @@ class Player:
         self.inventory['iron_pickaxe'] += 1
 
 
+class Cow:
+
+  def __init__(self, pos, random):
+    self.pos = pos
+    self.health = 1
+    self._random = random
+
+  @property
+  def texture(self):
+    return 'cow'
+
+  def update(self, terrain, objects, action):
+    if self.health <= 0:
+      del objects[objects.index(self)]
+    x = self.pos[0] + self._random.randint(-1, 2)
+    y = self.pos[1] + self._random.randint(-1, 2)
+    if _is_free((x, y), terrain, objects):
+      self.pos = (x, y)
+
+
 class Zombie:
 
   def __init__(self, pos, random):
     self.pos = pos
-    self.health = 3
+    self.health = 1
     self._random = random
 
   @property
@@ -258,13 +282,12 @@ class Env:
 
     self._player = Player(center)
     self._objects = [self._player]
-
-    self._objects.append(Zombie((center[0] - 1, center[1]), self._random))
-
     for x in range(self._area[0]):
       for y in range(self._area[1]):
         if self._terrain[x, y] in WALKABLE:
-          if uniform() > 0.993:
+          if self._terrain[x, y] == MATERIAL_IDS['grass'] and uniform() > 0.99:
+            self._objects.append(Cow((x, y), self._random))
+          elif uniform() > 0.993:
             self._objects.append(Zombie((x, y), self._random))
 
     return self._obs()
@@ -439,8 +462,9 @@ def test_keyboard(size=500, recording=True):
         action = noop
     obs, _, _, _ = env.step(action)
     if action > 4:
-      print(', '.join(sorted(
+      print('Inventory:', ', '.join(sorted(
           f'{k}: {v}' for k, v in env._player.inventory.items())))
+      print('Health:', env._player.health)
     if recording:
       frames.append(obs['image'].transpose((1, 0, 2)))
     surface = pygame.surfarray.make_surface(obs['image'])
