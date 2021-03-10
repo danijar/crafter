@@ -61,7 +61,7 @@ class Player:
     self.inventory = {
         'wood': 0, 'stone': 0, 'coal': 0, 'iron': 0, 'diamond': 0,
         'wood_pickaxe': 0, 'stone_pickaxe': 0, 'iron_pickaxe': 0,
-        'wood_sword': 0, 'stone_sword': 0, 'iron_sword': 0,
+        # 'wood_sword': 0, 'stone_sword': 0, 'iron_sword': 0,
     }
 
   @property
@@ -88,19 +88,23 @@ class Player:
     empty = MATERIAL_NAMES[terrain[target]] in ('grass', 'sand', 'path')
     water = MATERIAL_NAMES[terrain[target]] in ('water',)
     if action == 5:  # grab
+      pickaxe = max(
+          1 if self.inventory['wood_pickaxe'] else 0,
+          2 if self.inventory['stone_pickaxe'] else 0,
+          3 if self.inventory['iron_pickaxe'] else 0)
       if terrain[target] == MATERIAL_IDS['tree']:
         terrain[target] = MATERIAL_IDS['grass']
         self.inventory['wood'] += 1
-      elif terrain[target] == MATERIAL_IDS['stone']:
+      elif terrain[target] == MATERIAL_IDS['stone'] and pickaxe > 0:
         terrain[target] = MATERIAL_IDS['path']
         self.inventory['stone'] += 1
-      elif terrain[target] == MATERIAL_IDS['coal']:
+      elif terrain[target] == MATERIAL_IDS['coal'] and pickaxe > 0:
         terrain[target] = MATERIAL_IDS['path']
         self.inventory['coal'] += 1
-      elif terrain[target] == MATERIAL_IDS['iron']:
+      elif terrain[target] == MATERIAL_IDS['iron'] and pickaxe > 1:
         terrain[target] = MATERIAL_IDS['path']
         self.inventory['iron'] += 1
-      elif terrain[target] == MATERIAL_IDS['diamond']:
+      elif terrain[target] == MATERIAL_IDS['diamond'] and pickaxe > 2:
         terrain[target] = MATERIAL_IDS['path']
         self.inventory['diamond'] += 1
       return
@@ -430,7 +434,8 @@ def test_keyboard(size=500, recording=True):
         action = noop
     obs, _, _, _ = env.step(action)
     if action > 4:
-      print(env._player.inventory)
+      print(', '.join(sorted(
+          f'{k}: {v}' for k, v in env._player.inventory.items())))
     if recording:
       frames.append(obs['image'].transpose((1, 0, 2)))
     surface = pygame.surfarray.make_surface(obs['image'])
