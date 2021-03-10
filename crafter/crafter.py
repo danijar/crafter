@@ -191,8 +191,22 @@ class Zombie:
   def update(self, terrain, objects, action):
     if self.health <= 0:
       del objects[objects.index(self)]
-    x = self.pos[0] + self._random.randint(-1, 2)
-    y = self.pos[1] + self._random.randint(-1, 2)
+    player = [obj for obj in objects if isinstance(obj, Player)][0]
+    dist = np.sqrt(
+        (self.pos[0] - player.pos[0]) ** 2 +
+        (self.pos[1] - player.pos[1]) ** 2)
+    if dist <= 4:
+      if abs(self.pos[0] - player.pos[0]) > abs(self.pos[1] - player.pos[1]):
+        direction = (-np.sign(self.pos[0] - player.pos[0]), 0)
+      else:
+        direction = (0, -np.sign(self.pos[1] - player.pos[1]))
+    else:
+      if self._random.uniform() > 0.5:
+        direction = (0, self._random.randint(-1, 2))
+      else:
+        direction = (self._random.randint(-1, 2), 0)
+    x = self.pos[0] + direction[0]
+    y = self.pos[1] + direction[1]
     if _is_free((x, y), terrain, objects):
       self.pos = (x, y)
 
@@ -372,10 +386,6 @@ def _is_free(pos, terrain, objects):
   if terrain[pos[0], pos[1]] not in WALKABLE: return False
   if any(obj.pos == pos for obj in objects): return False
   return True
-
-
-def _view_distance(lhs, rhs):
-  return max(abs(l - r) for l, r in zip(lhs, rhs))
 
 
 def test_map():
