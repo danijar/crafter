@@ -72,7 +72,7 @@ class Player:
       target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
       if _is_free(target, terrain, objects):
         self.pos = target
-    if action == 4:  # Grab
+    if action == 4:  # grab
       target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
       if terrain[target] == MATERIAL_IDS['tree']:
         terrain[target] = MATERIAL_IDS['grass']
@@ -84,6 +84,11 @@ class Player:
         terrain[target] = MATERIAL_IDS['path']
       elif terrain[target] == MATERIAL_IDS['diamond']:
         terrain[target] = MATERIAL_IDS['path']
+    if action == 5:  # place
+      target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
+      if MATERIAL_NAMES[terrain[target]] in ('grass', 'sand', 'path', 'water'):
+        terrain[target] = MATERIAL_IDS['stone']
+
 
 
 class Zombie:
@@ -129,8 +134,8 @@ class Env:
 
   @property
   def action_space(self):
-    # left, right, up, down, grab, noop
-    return gym.spaces.Discrete(6)
+    # left, right, up, down, grab, place, noop
+    return gym.spaces.Discrete(7)
 
   def _noise(self, x, y, z, sizes):
     if not isinstance(sizes, dict):
@@ -327,8 +332,8 @@ def test_keyboard(size=500):
   env.reset()
   keymap = {
       pygame.K_a: 0, pygame.K_d: 1, pygame.K_w: 2, pygame.K_s: 3,
-      pygame.K_SPACE: 4}
-  noop = 5
+      pygame.K_SPACE: 4, pygame.K_RETURN: 5}
+  noop = 6
   screen = pygame.display.set_mode([size, size])
   running = True
   clock = pygame.time.Clock()
