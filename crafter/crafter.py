@@ -116,17 +116,17 @@ class Player:
         terrain[target] = MATERIAL_IDS['path']
         self.inventory['diamond'] += 1
       return
-    if action == 7:  # place stone
+    if action == 6:  # place stone
       if self.inventory['stone'] > 0 and (empty or water):
         terrain[target] = MATERIAL_IDS['stone']
         self.inventory['stone'] -= 1
       return
-    if action == 8:  # place table
+    if action == 7:  # place table
       if self.inventory['wood'] > 0 and empty:
         terrain[target] = MATERIAL_IDS['table']
         self.inventory['wood'] -= 1
       return
-    if action == 9:  # place furnace
+    if action == 8:  # place furnace
       if self.inventory['stone'] > 0 and empty:
         terrain[target] = MATERIAL_IDS['furnace']
         self.inventory['stone'] -= 1
@@ -136,18 +136,18 @@ class Player:
         self.pos[1] - 2: self.pos[1] + 2]
     table = (nearby == MATERIAL_IDS['table']).any()
     furnace = (nearby == MATERIAL_IDS['furnace']).any()
-    if action == 10:  # make wood pickaxe
+    if action == 9:  # make wood pickaxe
       if self.inventory['wood'] > 0 and table:
         self.inventory['wood'] -= 1
         self.inventory['wood_pickaxe'] += 1
-    if action == 11:  # make stone pickaxe
+    if action == 10:  # make stone pickaxe
       wood = self.inventory['wood']
       stone = self.inventory['stone']
       if wood > 0 and stone > 0 and table:
         self.inventory['wood'] -= 1
         self.inventory['stone'] -= 1
         self.inventory['stone_pickaxe'] += 1
-    if action == 12:  # make iron pickaxe
+    if action == 11:  # make iron pickaxe
       wood = self.inventory['wood']
       iron = self.inventory['iron']
       if wood and iron and furnace:
@@ -219,15 +219,18 @@ class Zombie:
 
 class Env:
 
-  def __init__(self, area=(64, 64), view=5, size=64, seed=2):
+  def __init__(self, area=(64, 64), view=5, size=64, length=100000, seed=None):
     self._area = area
     self._view = view
     self._size = size
+    self._length = length
     self._seed = seed
     self._episode = 0
     self._grid = self._size // (2 * self._view + 1)
     self._textures = self._load_textures()
     self._terrain = np.zeros(area, np.uint8)
+    self._step = None
+    self._achievements = None
     self._random = None
     self._player = None
     self._objects = None
@@ -262,6 +265,9 @@ class Env:
     return value / sum(sizes.keys())
 
   def reset(self):
+    self._step = 0
+    self._achievements = set()
+
     self._episode += 1
     self._terrain[:] = 0
     center = self._area[0] // 2, self._area[1] // 2
@@ -320,16 +326,22 @@ class Env:
     return self._obs()
 
   def step(self, action):
+    self._step += 1
     for obj in self._objects:
       obj.update(self._terrain, self._objects, action)
+
     obs = self._obs()
-    reward = self.reward()
-    done = False
+
+    # TODO
+    # self._achievements
+    reward = 0
+
+    dead = self._player.health <= 0
+    over = self._length and self._step >= self._length
+    done = dead or over
+
     info = {}
     return obs, reward, done, info
-
-  def reward(self):
-    return 0
 
   def render(self):
     canvas = np.zeros((self._size, self._size, 3), np.uint8)

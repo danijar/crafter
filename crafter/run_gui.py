@@ -14,6 +14,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--seed', type=int, default=None)
 parser.add_argument('--map', nargs=2, type=int, default=(64, 64))
 parser.add_argument('--view', type=int, default=4)
+parser.add_argument('--length', type=int, default=None)
 parser.add_argument('--window', type=int, default=500)
 parser.add_argument('--record', type=str, default=None)
 parser.add_argument('--fps', type=int, default=3)
@@ -36,7 +37,7 @@ print('\nActions:')
 for key, action in keymap.items():
   print(f'  {pygame.key.name(key)}: {action}')
 
-env = crafter.Env(args.map, args.view, args.window, args.seed)
+env = crafter.Env(args.map, args.view, args.window, args.length, args.seed)
 env.reset()
 inventory = None
 health = None

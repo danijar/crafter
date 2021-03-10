@@ -1,13 +1,14 @@
 import time
 
 import imageio
+import numpy as np
 
 import crafter
 
 env = crafter.Env(area=(64, 64), view=4, size=64, seed=0)
 start = time.time()
 env.reset()
-print(f'Reset time: {time.time()-start:.2f}s')
+print(f'Reset time: {1000*(time.time()-start):.2f}ms')
 frames = []
 random = np.random.RandomState(0)
 start = time.time()
@@ -16,7 +17,7 @@ for index in range(100):
   obs, _, _, _ = env.step(action)
   frames.append(obs['image'])
 duration = time.time() - start
-print(f'Step time: {duration:.2f}s ({int(100/duration)} FPS)')
+print(f'Step time: {1000*duration/100:.2f}ms ({int(100/duration)} FPS)')
 cols = int(np.sqrt(len(frames)))
 rows = int(np.ceil(len(frames) / cols))
 grid = np.concatenate([
