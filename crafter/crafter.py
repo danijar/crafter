@@ -85,6 +85,7 @@ class Zombie:
     return 'zombie'
 
   def update(self, terrain, objects, action):
+    return  # TODO
     x = self.pos[0] + self._random.randint(-1, 2)
     y = self.pos[1] + self._random.randint(-1, 2)
     if _is_free((x, y), terrain, objects):
@@ -174,6 +175,9 @@ class Env:
 
     self._player = Player(center)
     self._objects = [self._player]
+
+    self._objects.append(Zombie((center[0] - 1, center[1]), self._random))
+
     for x in range(self._area[0]):
       for y in range(self._area[1]):
         if self._terrain[x, y] in WALKABLE:
@@ -248,6 +252,7 @@ class Env:
     for name, filename in TEXTURES.items():
       filename = pathlib.Path(__file__).parent / filename
       image = imageio.imread(filename)
+      image = image.transpose((1, 0) + tuple(range(2, len(image.shape))))
       image = skimage.transform.resize(
           image, (self._grid, self._grid),
           order=0, anti_aliasing=False, preserve_range=True).astype(np.uint8)
@@ -302,6 +307,39 @@ def test_episode():
   print('Saved episode.mp4')
 
 
+def test_keyboard(size=500):
+  import pygame
+  pygame.init()
+  env = Env(area=(64, 64), view=4, size=size, seed=0)
+  env.reset()
+  keymap = {pygame.K_a: 0, pygame.K_d: 1, pygame.K_w: 2, pygame.K_s: 3}
+  noop = 4
+  screen = pygame.display.set_mode([size, size])
+  running = True
+  clock = pygame.time.Clock()
+  while running:
+    pygame.event.pump()
+    for event in pygame.event.get():
+      if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+        running = False
+      elif event.type == pygame.QUIT:
+        running = False
+    pressed = pygame.key.get_pressed()
+    for key, action in keymap.items():
+      if pressed[key]:
+        break
+    else:
+      action = noop
+    obs, _, _, _ = env.step(action)
+    surface = pygame.surfarray.make_surface(obs['image'])
+    screen.blit(surface, (0, 0))
+    pygame.display.flip()
+    clock.tick(3)  # fps
+  pygame.quit()
+
+
+
 if __name__ == '__main__':
-  test_map()
-  test_episode()
+  # test_map()
+  # test_episode()
+  test_keyboard()
