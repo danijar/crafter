@@ -2,6 +2,8 @@
 
 Open world survival environment for reinforcement learning.
 
+![Crafter Terrain](https://github.com/danijar/crafter/raw/main/media/terrain.png)
+
 ## Highlights
 
 Crafter is a procedurally generated 2D world, where the agent finds food,
@@ -15,6 +17,8 @@ in turn unlock new materials.
 - **Easy:** Flat categorical action space with 12 actions.
 - **Fast:** Runs at 2000 FPS on a simple laptop.
 - **Reproducible:** All randomness is controlled by a seed.
+
+![Crafter Video](https://github.com/danijar/crafter/raw/main/media/video.gif)
 
 ## Instructions
 
