@@ -101,7 +101,7 @@ class Player:
       material = terrain[target]
       material_name = MATERIAL_NAMES[material]
     else:
-      terrain[target] = -1
+      material = -1
       material_name = 'out_of_bounds'
     empty = material_name in ('grass', 'sand', 'path')
     water = material_name in ('water',)
