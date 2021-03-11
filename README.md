@@ -44,7 +44,7 @@ The following optional command line flags are available:
 | Flag | Default | Description |
 | :--- | :-----: | :---------- |
 | `--window <size>` | 800 | Window size in pixels, used as width and height. |
-| `--fps <integer>` | 3 | How many times to update the environment per second. |
+| `--fps <integer>` | 5 | How many times to update the environment per second. |
 | `--record <filename>.mp4` | None | Record a video of the trajectory. |
 | `--area <width> <height>` | 64 64 | The size of the world in cells. |
 | `--view <distance>` | 6 | The view distance of the player in cells. |

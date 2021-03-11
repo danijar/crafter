@@ -19,7 +19,7 @@ def main():
   parser.add_argument('--health', type=int, default=10)
   parser.add_argument('--window', type=int, default=800)
   parser.add_argument('--record', type=str, default=None)
-  parser.add_argument('--fps', type=int, default=3)
+  parser.add_argument('--fps', type=int, default=5)
   args = parser.parse_args()
 
   keymap = {
