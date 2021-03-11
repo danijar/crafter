@@ -1,5 +1,7 @@
 # Crafter
 
+[![PyPI](https://img.shields.io/pypi/v/crafter.svg)](https://pypi.python.org/pypi/crafter/#history)
+
 Open world survival environment for reinforcement learning.
 
 ![Crafter Terrain](https://github.com/danijar/crafter/raw/main/media/terrain.png)
