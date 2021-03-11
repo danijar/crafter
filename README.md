@@ -134,6 +134,7 @@ available:
 | `health` | `Box(0, 255, (), np.uint8)` |
 | `wood` | `Box(0, 255, (), np.uint8)` |
 | `stone` | `Box(0, 255, (), np.uint8)` |
+| `iron` | `Box(0, 255, (), np.uint8)` |
 | `diamond` | `Box(0, 255, (), np.uint8)` |
 | `wood_pickaxe` | `Box(0, 255, (), np.uint8)` |
 | `stone_pickaxe` | `Box(0, 255, (), np.uint8)` |
