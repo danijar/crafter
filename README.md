@@ -61,7 +61,7 @@ The following optional command line flags are available:
 | `--window <size>` | 500 | Window size in pixels, used as width and height. |
 | `--fps <integer>` | 3 | How many times to update the environment per second. |
 | `--record <filename>.mp4` | None | Record a video of the trajectory. |
-| `--map <width> <height>` | 64 64 | The size of the world in cells. |
+| `--area <width> <height>` | 64 64 | The size of the world in cells. |
 | `--view <distance>` | 4 | The view distance of the player in cells. |
 | `--length <integer>` | None | Time limit for the episode. |
 | `--seed <integer>` | None | Determines world generation and creatures. |
@@ -75,7 +75,7 @@ default configuration. Nonetheless, the environment can be configured via its
 constructor:
 
 ```py
-crafter.Env(area=(64, 64), view=5, size=64, length=100000, seed=None)
+crafter.Env(area=(64, 64), view=5, size=64, length=10000, seed=None)
 ```
 
 | Parameter | Default | Description |
@@ -83,7 +83,8 @@ crafter.Env(area=(64, 64), view=5, size=64, length=100000, seed=None)
 | `area` | `(64, 64)` | Size of the world in cells. |
 | `view` | `5` | View distance of the player in cells. |
 | `size` | `64` | Render size of the images, used for both width and height. |
-| `length` | `100000` | Time limit for the episode, can be `None`. |
+| `length` | `10000` | Time limit for the episode, can be `None`. |
+| `health` | `10` | Initial health level of the player. |
 | `seed` | None | Interger that determines world generation and creatures. |
 
 ### Reward

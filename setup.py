@@ -11,7 +11,7 @@ setuptools.setup(
     long_description_content_type='text/markdown',
     packages=['crafter'],
     package_data={'crafter': ['assets/*']},
-    entry_points={'console_scripts': ['crafter=crafter:run_gui']},
+    entry_points={'console_scripts': ['crafter=crafter.run_gui:main']},
     install_requires=['numpy', 'imageio', 'gym', 'scikit-image', 'opensimplex'],
     extras_require={'gui': ['pygame']},
     classifiers=[

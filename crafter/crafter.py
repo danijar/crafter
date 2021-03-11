@@ -56,10 +56,10 @@ WALKABLE = {
 
 class Player:
 
-  def __init__(self, pos):
+  def __init__(self, pos, health):
     self.pos = pos
     self.face = (0, 1)
-    self.health = 3
+    self.health = health
     self.inventory = {
         'wood': 0, 'stone': 0, 'coal': 0, 'iron': 0, 'diamond': 0,
         'wood_pickaxe': 0, 'stone_pickaxe': 0, 'iron_pickaxe': 0,
@@ -219,11 +219,14 @@ class Zombie:
 
 class Env:
 
-  def __init__(self, area=(64, 64), view=5, size=64, length=100000, seed=None):
+  def __init__(
+      self, area=(64, 64), view=5, size=64, length=10000, health=10,
+      seed=None):
     self._area = area
     self._view = view
     self._size = size
     self._length = length
+    self._health = health
     self._seed = seed
     self._episode = 0
     self._grid = self._size // (2 * self._view + 1)
@@ -313,7 +316,7 @@ class Env:
           else:
             self._terrain[x, y] = MATERIAL_IDS['grass']
 
-    self._player = Player(center)
+    self._player = Player(center, self._health)
     self._objects = [self._player]
     for x in range(self._area[0]):
       for y in range(self._area[1]):
