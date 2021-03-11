@@ -44,6 +44,7 @@ def main():
   env.reset()
   inventory = None
   health = None
+  achievements = set()
   if args.record:
     frames = []
 
@@ -71,6 +72,11 @@ def main():
         action = 'noop'
 
     obs, reward, done, _ = env.step(env.action_names.index(action))
+    if len(env._player.achievements) > len(achievements):
+      for name in env._player.achievements:
+        if name not in achievements:
+          print('\nAchievement:', name)
+      achievements = env._player.achievements.copy()
     if not health or health != env._player.health:
       health = env._player.health
       print('\nHealth:', health)

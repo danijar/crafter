@@ -89,10 +89,27 @@ crafter.Env(area=(64, 64), view=5, size=64, length=10000, seed=None)
 
 ### Reward
 
-The reward is sparse. It is 1 when the agent collects a new material or creates
-a new object for the first time and 0 for all other steps. The reward can
-either be given to the agent or used as a proxy metric for evaluating
-unsupervised agents.
+The reward is sparse. It can either be given to the agent or used as a proxy
+metric for evaluating unsupervised agents. The reward is 1 when the agent
+unlocks a new achievement and 0 for all other time steps. The list of
+achievements is as follows:
+
+- `find_food`
+- `defeat_zombie`
+- `collect_wood`
+- `place_table`
+- `make_wood_pickaxe`
+- `collect_stone`
+- `place_stone`
+- `make_stone_pickaxe`
+- `collect_coal`
+- `collect_iron`
+- `place_furnace`
+- `make_iron_pickaxe`
+- `collect_diamond`
+
+The set of unlocked achievements can also be accessed via the `info`
+dictionary.
 
 ### Termination
 

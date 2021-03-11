@@ -63,8 +63,10 @@ class Player:
     self.inventory = {
         'wood': 0, 'stone': 0, 'coal': 0, 'iron': 0, 'diamond': 0,
         'wood_pickaxe': 0, 'stone_pickaxe': 0, 'iron_pickaxe': 0,
-        # 'wood_sword': 0, 'stone_sword': 0, 'iron_sword': 0,
     }
+    self.achievements = set()
+    self._max_health = health
+    self._hunger = 0
 
   @property
   def texture(self):
@@ -76,6 +78,10 @@ class Player:
     }[self.face]
 
   def update(self, terrain, objects, action):
+    self._hunger += 1
+    if self._hunger > 100:
+      self.health -= 1
+      self._hunger = 0
     if action == 0:
       return  # noop
     if 1 <= action <= 4:
@@ -93,8 +99,11 @@ class Player:
       for obj in objects:
         if obj.pos == target and hasattr(obj, 'health'):
           obj.health -= 1
+          if isinstance(obj, Zombie) and obj.health <= 0:
+            self.achievements.add('defeat_zombie')
           if isinstance(obj, Cow) and obj.health <= 0:
-            self.health = min(self.health + 1, 3)  # food
+            self.health = min(self.health + 1, self._max_health)
+            self.achievements.add('find_food')
           return
       pickaxe = max(
           1 if self.inventory['wood_pickaxe'] else 0,
@@ -103,33 +112,41 @@ class Player:
       if terrain[target] == MATERIAL_IDS['tree']:
         terrain[target] = MATERIAL_IDS['grass']
         self.inventory['wood'] += 1
+        self.achievements.add('collect_wood')
       elif terrain[target] == MATERIAL_IDS['stone'] and pickaxe > 0:
         terrain[target] = MATERIAL_IDS['path']
         self.inventory['stone'] += 1
+        self.achievements.add('collect_stone')
       elif terrain[target] == MATERIAL_IDS['coal'] and pickaxe > 0:
         terrain[target] = MATERIAL_IDS['path']
         self.inventory['coal'] += 1
+        self.achievements.add('collect_coal')
       elif terrain[target] == MATERIAL_IDS['iron'] and pickaxe > 1:
         terrain[target] = MATERIAL_IDS['path']
         self.inventory['iron'] += 1
+        self.achievements.add('collect_iron')
       elif terrain[target] == MATERIAL_IDS['diamond'] and pickaxe > 2:
         terrain[target] = MATERIAL_IDS['path']
         self.inventory['diamond'] += 1
+        self.achievements.add('collect_diamond')
       return
     if action == 6:  # place stone
       if self.inventory['stone'] > 0 and (empty or water):
         terrain[target] = MATERIAL_IDS['stone']
         self.inventory['stone'] -= 1
+        self.achievements.add('place_stone')
       return
     if action == 7:  # place table
       if self.inventory['wood'] > 0 and empty:
         terrain[target] = MATERIAL_IDS['table']
         self.inventory['wood'] -= 1
+        self.achievements.add('place_table')
       return
     if action == 8:  # place furnace
       if self.inventory['stone'] > 0 and empty:
         terrain[target] = MATERIAL_IDS['furnace']
         self.inventory['stone'] -= 1
+        self.achievements.add('place_furnace')
       return
     nearby = terrain[
         self.pos[0] - 2: self.pos[0] + 2,
@@ -140,6 +157,7 @@ class Player:
       if self.inventory['wood'] > 0 and table:
         self.inventory['wood'] -= 1
         self.inventory['wood_pickaxe'] += 1
+        self.achievements.add('make_wood_pickaxe')
     if action == 10:  # make stone pickaxe
       wood = self.inventory['wood']
       stone = self.inventory['stone']
@@ -147,6 +165,7 @@ class Player:
         self.inventory['wood'] -= 1
         self.inventory['stone'] -= 1
         self.inventory['stone_pickaxe'] += 1
+        self.achievements.add('make_stone_pickaxe')
     if action == 11:  # make iron pickaxe
       wood = self.inventory['wood']
       iron = self.inventory['iron']
@@ -154,6 +173,7 @@ class Player:
         self.inventory['wood'] -= 1
         self.inventory['stone'] -= 1
         self.inventory['iron_pickaxe'] += 1
+        self.achievements.add('make_iron_pickaxe')
 
 
 class Cow:
@@ -170,8 +190,12 @@ class Cow:
   def update(self, terrain, objects, action):
     if self.health <= 0:
       del objects[objects.index(self)]
-    x = self.pos[0] + self._random.randint(-1, 2)
-    y = self.pos[1] + self._random.randint(-1, 2)
+    if self._random.uniform() > 0.5:
+      direction = (0, self._random.randint(-1, 2))
+    else:
+      direction = (self._random.randint(-1, 2), 0)
+    x = self.pos[0] + direction[0]
+    y = self.pos[1] + direction[1]
     if _is_free((x, y), terrain, objects):
       self.pos = (x, y)
 
@@ -202,7 +226,9 @@ class Zombie:
     else:
       self._near = False
     if dist <= 4:
-      if abs(self.pos[0] - player.pos[0]) > abs(self.pos[1] - player.pos[1]):
+      xdist = abs(self.pos[0] - player.pos[0])
+      ydist = abs(self.pos[1] - player.pos[1])
+      if xdist > ydist and self._random.uniform() < 0.7:
         direction = (-np.sign(self.pos[0] - player.pos[0]), 0)
       else:
         direction = (0, -np.sign(self.pos[1] - player.pos[1]))
@@ -233,11 +259,11 @@ class Env:
     self._textures = self._load_textures()
     self._terrain = np.zeros(area, np.uint8)
     self._step = None
-    self._achievements = None
     self._random = None
     self._player = None
     self._objects = None
     self._simplex = None
+    self._achievements = None
 
   @property
   def observation_space(self):
@@ -269,8 +295,6 @@ class Env:
 
   def reset(self):
     self._step = 0
-    self._achievements = set()
-
     self._episode += 1
     self._terrain[:] = 0
     center = self._area[0] // 2, self._area[1] // 2
@@ -317,6 +341,7 @@ class Env:
             self._terrain[x, y] = MATERIAL_IDS['grass']
 
     self._player = Player(center, self._health)
+    self._achievements = self._player.achievements.copy()
     self._objects = [self._player]
     for x in range(self._area[0]):
       for y in range(self._area[1]):
@@ -334,20 +359,17 @@ class Env:
       obj.update(self._terrain, self._objects, action)
     obs = self._obs()
     reward = 0
-    for key, value in obs.items():
-      if key in ('image', 'health'):
-        continue
-      if value > 0 and key not in self._achievements:
-        self._achievements.add(key)
-        reward = 1
+    if len(self._player.achievements) > len(self._achievements):
+      reward = 1
+      self._achievements = self._player.achievements.copy()
     dead = self._player.health <= 0
     over = self._length and self._step >= self._length
     done = dead or over
-    info = {}
+    info = {'achievements': self._achievements.copy()}
     return obs, reward, done, info
 
   def render(self):
-    canvas = np.zeros((self._size, self._size, 3), np.uint8)
+    canvas = np.zeros((self._size, self._size, 3), np.uint8) + 127
     for i in range(2 * self._view + 2):
       for j in range(2 * self._view + 2):
         x = self._player.pos[0] + i - self._view
@@ -369,7 +391,8 @@ class Env:
 
   def _obs(self):
     obs = {'image': self.render(), 'health': self._player.health}
-    obs.update(self._player.inventory)
+    for key, value in self._player.inventory.items():
+      obs[key] = np.clip(value, 0, 255)
     return obs
 
   def _draw(self, canvas, pos, texture):
