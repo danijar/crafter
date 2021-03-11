@@ -20,9 +20,38 @@ in turn unlock new materials.
 - **Fast:** Runs at 2000 FPS on a simple laptop.
 - **Reproducible:** All randomness is controlled by a seed.
 
+## Play Yourself
+
+You can play the game yourself with an interactive window and keyboard input.
+The mapping from keys to actions, health level, and inventory state are printed
+to the terminal.
+
+```sh
+# Install with GUI
+pip3 install 'crafter[gui]'
+
+# Start the game
+crafter
+
+# Alternative way to start the game
+python3 -m crafter.run_gui
+```
+
 ![Crafter Video](https://github.com/danijar/crafter/raw/main/media/video.gif)
 
-## Instructions
+The following optional command line flags are available:
+
+| Flag | Default | Description |
+| :--- | :-----: | :---------- |
+| `--window <size>` | 500 | Window size in pixels, used as width and height. |
+| `--fps <integer>` | 3 | How many times to update the environment per second. |
+| `--record <filename>.mp4` | None | Record a video of the trajectory. |
+| `--area <width> <height>` | 64 64 | The size of the world in cells. |
+| `--view <distance>` | 4 | The view distance of the player in cells. |
+| `--length <integer>` | None | Time limit for the episode. |
+| `--seed <integer>` | None | Determines world generation and creatures. |
+
+## Training Agents
 
 Installation: `pip3 install -U crafter`
 
@@ -42,35 +71,6 @@ while not done:
 ```
 
 [gym]: https://github.com/openai/gym
-
-## Play Yourself
-
-You can play the game yourself with an interactive window and keyboard input.
-The mapping from keys to actions, health level, and inventory state are printed
-to the terminal.
-
-```sh
-# Install the GUI
-pip3 install 'crafter[gui]'
-
-# Start the game
-crafter
-
-# Alternative way to start the game
-python3 -m crafter.run_gui
-```
-
-The following optional command line flags are available:
-
-| Flag | Default | Description |
-| :--- | :-----: | :---------- |
-| `--window <size>` | 500 | Window size in pixels, used as width and height. |
-| `--fps <integer>` | 3 | How many times to update the environment per second. |
-| `--record <filename>.mp4` | None | Record a video of the trajectory. |
-| `--area <width> <height>` | 64 64 | The size of the world in cells. |
-| `--view <distance>` | 4 | The view distance of the player in cells. |
-| `--length <integer>` | None | Time limit for the episode. |
-| `--seed <integer>` | None | Determines world generation and creatures. |
 
 ## Environment Details
 
