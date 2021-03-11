@@ -91,10 +91,14 @@ class Player:
       target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
       if _is_free(target, terrain, objects):
         self.pos = target
+      if terrain[target] == MATERIAL_IDS['lava']:
+        self.pos = target
+        self.health = 0
       return
     target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
     empty = MATERIAL_NAMES[terrain[target]] in ('grass', 'sand', 'path')
     water = MATERIAL_NAMES[terrain[target]] in ('water',)
+    lava = MATERIAL_NAMES[terrain[target]] in ('lava',)
     if action == 5:  # grab or attack
       for obj in objects:
         if obj.pos == target and hasattr(obj, 'health'):
@@ -131,7 +135,7 @@ class Player:
         self.achievements.add('collect_diamond')
       return
     if action == 6:  # place stone
-      if self.inventory['stone'] > 0 and (empty or water):
+      if self.inventory['stone'] > 0 and (empty or water or lava):
         terrain[target] = MATERIAL_IDS['stone']
         self.inventory['stone'] -= 1
         self.achievements.add('place_stone')
@@ -432,6 +436,6 @@ class Env:
 def _is_free(pos, terrain, objects):
   if not (0 <= pos[0] < terrain.shape[0]): return False
   if not (0 <= pos[1] < terrain.shape[1]): return False
-  if terrain[pos[0], pos[1]] not in WALKABLE: return False
+  if terrain[pos] not in WALKABLE: return False
   if any(obj.pos == pos for obj in objects): return False
   return True

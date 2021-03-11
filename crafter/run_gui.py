@@ -14,10 +14,10 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument('--seed', type=int, default=None)
   parser.add_argument('--area', nargs=2, type=int, default=(64, 64))
-  parser.add_argument('--view', type=int, default=4)
+  parser.add_argument('--view', type=int, default=6)
   parser.add_argument('--length', type=int, default=None)
   parser.add_argument('--health', type=int, default=10)
-  parser.add_argument('--window', type=int, default=500)
+  parser.add_argument('--window', type=int, default=800)
   parser.add_argument('--record', type=str, default=None)
   parser.add_argument('--fps', type=int, default=3)
   args = parser.parse_args()
@@ -47,6 +47,9 @@ def main():
   achievements = set()
   if args.record:
     frames = []
+
+  diamond = crafter.crafter.MATERIAL_IDS['diamond']
+  print('\nDiamonds:', (env._terrain == diamond).sum())
 
   pygame.init()
   screen = pygame.display.set_mode([args.window, args.window])
