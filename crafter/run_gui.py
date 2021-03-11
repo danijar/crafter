@@ -70,7 +70,7 @@ def main():
       else:
         action = 'noop'
 
-    obs, _, _, _ = env.step(env.action_names.index(action))
+    obs, reward, done, _ = env.step(env.action_names.index(action))
     if not health or health != env._player.health:
       health = env._player.health
       print('\nHealth:', health)
@@ -81,6 +81,10 @@ def main():
         print(f'  {key}: {value}')
     if env._step > 0 and env._step % 100 == 0:
       print('\nTime step:', env._step)
+    if reward:
+      print('\nReward:', reward)
+    if done:
+      print('\nDone:', done)
 
     if args.record:
       frames.append(obs['image'].transpose((1, 0, 2)))

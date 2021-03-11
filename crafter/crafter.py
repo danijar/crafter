@@ -332,17 +332,17 @@ class Env:
     self._step += 1
     for obj in self._objects:
       obj.update(self._terrain, self._objects, action)
-
     obs = self._obs()
-
-    # TODO
-    # self._achievements
     reward = 0
-
+    for key, value in obs.items():
+      if key in ('image', 'health'):
+        continue
+      if value > 0 and key not in self._achievements:
+        self._achievements.add(key)
+        reward = 1
     dead = self._player.health <= 0
     over = self._length and self._step >= self._length
     done = dead or over
-
     info = {}
     return obs, reward, done, info
 
