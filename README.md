@@ -81,13 +81,13 @@ default configuration. Nonetheless, the environment can be configured via its
 constructor:
 
 ```py
-crafter.Env(area=(64, 64), view=5, size=64, length=10000, seed=None)
+crafter.Env(area=(64, 64), view=4, size=64, length=10000, seed=None)
 ```
 
 | Parameter | Default | Description |
 | :-------- | :------ | :---------- |
 | `area` | `(64, 64)` | Size of the world in cells. |
-| `view` | `5` | View distance of the player in cells. |
+| `view` | `4` | View distance of the player in cells. |
 | `size` | `64` | Render size of the images, used for both width and height. |
 | `length` | `10000` | Time limit for the episode, can be `None`. |
 | `health` | `10` | Initial health level of the player. |

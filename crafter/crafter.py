@@ -246,7 +246,7 @@ class Zombie:
 class Env:
 
   def __init__(
-      self, area=(64, 64), view=5, size=64, length=10000, health=10,
+      self, area=(64, 64), view=4, size=64, length=10000, health=10,
       seed=None):
     self._area = area
     self._view = view
