@@ -96,8 +96,9 @@ def main():
       print('\nDone:', done)
 
     if args.record:
-      frames.append(obs['image'].transpose((1, 0, 2)))
-    surface = pygame.surfarray.make_surface(obs['image'])
+      frames.append(obs['image'])
+    surface = pygame.surfarray.make_surface(
+        obs['image'].transpose((1, 0, 2)))
     screen.blit(surface, (0, 0))
     pygame.display.flip()
     clock.tick(args.fps)

@@ -26,7 +26,7 @@ def main():
     strip = []
     for col in range(args.cols):
       try:
-        strip.append(images[row * args.cols + col].transpose((1, 0, 2)))
+        strip.append(images[row * args.cols + col])
       except IndexError:
         strip.append(np.zeros_like(strip[-1]))
     strips.append(np.concatenate(strip, 1))

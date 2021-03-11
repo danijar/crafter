@@ -91,14 +91,21 @@ class Player:
       target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
       if _is_free(target, terrain, objects):
         self.pos = target
-      if terrain[target] == MATERIAL_IDS['lava']:
+      if _is_free(target, terrain, objects, ['lava']):
         self.pos = target
         self.health = 0
       return
     target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
-    empty = MATERIAL_NAMES[terrain[target]] in ('grass', 'sand', 'path')
-    water = MATERIAL_NAMES[terrain[target]] in ('water',)
-    lava = MATERIAL_NAMES[terrain[target]] in ('lava',)
+    area = terrain.shape
+    if (0 <= target[0] < area[0]) and (0 <= target[1] < area[1]):
+      material = terrain[target]
+      material_name = MATERIAL_NAMES[material]
+    else:
+      terrain[target] = -1
+      material_name = 'out_of_bounds'
+    empty = material_name in ('grass', 'sand', 'path')
+    water = material_name in ('water',)
+    lava = material_name in ('lava',)
     if action == 5:  # grab or attack
       for obj in objects:
         if obj.pos == target and hasattr(obj, 'health'):
@@ -113,23 +120,23 @@ class Player:
           1 if self.inventory['wood_pickaxe'] else 0,
           2 if self.inventory['stone_pickaxe'] else 0,
           3 if self.inventory['iron_pickaxe'] else 0)
-      if terrain[target] == MATERIAL_IDS['tree']:
+      if material == MATERIAL_IDS['tree']:
         terrain[target] = MATERIAL_IDS['grass']
         self.inventory['wood'] += 1
         self.achievements.add('collect_wood')
-      elif terrain[target] == MATERIAL_IDS['stone'] and pickaxe > 0:
+      elif material == MATERIAL_IDS['stone'] and pickaxe > 0:
         terrain[target] = MATERIAL_IDS['path']
         self.inventory['stone'] += 1
         self.achievements.add('collect_stone')
-      elif terrain[target] == MATERIAL_IDS['coal'] and pickaxe > 0:
+      elif material == MATERIAL_IDS['coal'] and pickaxe > 0:
         terrain[target] = MATERIAL_IDS['path']
         self.inventory['coal'] += 1
         self.achievements.add('collect_coal')
-      elif terrain[target] == MATERIAL_IDS['iron'] and pickaxe > 1:
+      elif material == MATERIAL_IDS['iron'] and pickaxe > 1:
         terrain[target] = MATERIAL_IDS['path']
         self.inventory['iron'] += 1
         self.achievements.add('collect_iron')
-      elif terrain[target] == MATERIAL_IDS['diamond'] and pickaxe > 2:
+      elif material == MATERIAL_IDS['diamond'] and pickaxe > 2:
         terrain[target] = MATERIAL_IDS['path']
         self.inventory['diamond'] += 1
         self.achievements.add('collect_diamond')
@@ -385,13 +392,13 @@ class Env:
     for obj in self._objects:
       texture = self._textures[obj.texture]
       self._draw(canvas, obj.pos, texture)
-    used = self._grid * (2 * self._view + 1)
+    # used = self._grid * (2 * self._view + 1)
     # if used != self._size:
     #   canvas = skimage.transform.resize(
     #       canvas[:used, :used], (self._size, self._size),
     #       order=0, anti_aliasing=False,
     #       preserve_range=True).astype(np.uint8)
-    return canvas
+    return canvas.transpose((1, 0, 2))
 
   def _obs(self):
     obs = {'image': self.render(), 'health': self._player.health}
@@ -418,10 +425,8 @@ class Env:
       result = texture
     canvas[x: x + w, y: y + h] = result
 
-
   def _load_textures(self):
     textures = {}
-    resolution = (self._size // 2 * self._view + 1)
     for name, filename in TEXTURES.items():
       filename = pathlib.Path(__file__).parent / filename
       image = imageio.imread(filename)
@@ -433,9 +438,9 @@ class Env:
     return textures
 
 
-def _is_free(pos, terrain, objects):
+def _is_free(pos, terrain, objects, valid=WALKABLE):
   if not (0 <= pos[0] < terrain.shape[0]): return False
   if not (0 <= pos[1] < terrain.shape[1]): return False
-  if terrain[pos] not in WALKABLE: return False
+  if terrain[pos] not in valid: return False
   if any(obj.pos == pos for obj in objects): return False
   return True
