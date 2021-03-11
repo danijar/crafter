@@ -362,9 +362,9 @@ class Env:
     for obj in self._objects:
       obj.update(self._terrain, self._objects, action)
     obs = self._obs()
-    reward = 0
+    reward = 0.0
     if len(self._player.achievements) > len(self._achievements):
-      reward = 1
+      reward = 1.0
       self._achievements = self._player.achievements.copy()
     dead = self._player.health <= 0
     over = self._length and self._step >= self._length
