@@ -376,7 +376,10 @@ class Env:
     dead = self._player.health <= 0
     over = self._length and self._step >= self._length
     done = dead or over
-    info = {'achievements': self._achievements.copy()}
+    info = {
+        'achievements': self._achievements.copy(),
+        'discount': 1 - float(dead),
+    }
     return obs, reward, done, info
 
   def render(self):
