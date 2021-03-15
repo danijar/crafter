@@ -404,9 +404,10 @@ class Env:
     return canvas.transpose((1, 0, 2))
 
   def _obs(self):
-    obs = {'image': self.render(), 'health': self._player.health}
+    obs = {'image': self.render()}
+    obs['health'] = np.clip(self._player.health, 0, 255).astype(np.uint8)
     for key, value in self._player.inventory.items():
-      obs[key] = np.clip(value, 0, 255)
+      obs[key] = np.clip(value, 0, 255).astype(np.uint8)
     return obs
 
   def _draw(self, canvas, pos, texture):
