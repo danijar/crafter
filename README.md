@@ -157,7 +157,7 @@ one of the 12 possible actions:
 | 7 | `place_table` | Wood in inventory. |
 | 8 | `place_furnace` | Stone in inventory. |
 | 9 | `make_wood_pickaxe` | Nearby table and wood in inventory. |
-| 10 | `make_stone_pickaxe` | Nearby tabel and wood, stone in inventory. |
+| 10 | `make_stone_pickaxe` | Nearby table and wood, stone in inventory. |
 | 11 | `make_iron_pickaxe` | Nearby furnace and wood, coal, iron an inventory. |
 
 ## Questions
