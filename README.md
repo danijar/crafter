@@ -160,6 +160,21 @@ one of the 12 possible actions:
 | 10 | `make_stone_pickaxe` | Nearby table and wood, stone in inventory. |
 | 11 | `make_iron_pickaxe` | Nearby furnace and wood, coal, iron an inventory. |
 
+## Baselines
+
+To understand how challenging the environment is, we trained the
+[DreamerV2][dreamerv2] agent 10 times for 30M environment steps each. The agent
+receives the rewards that correspond to the 13 achievements that can be
+unlocked in each episode, the most difficult of which is to collect a diamond.
+
+![Crafter Terrain](https://github.com/danijar/crafter/raw/main/media/dreamerv2.png)
+
+We observe consistent learning progress. Eventually, many of the runs
+sporadically collect a diamond. This shows that the environment is challenging
+and unsolved but not completely out of reach.
+
+[dreamerv2]: https://github.com/danijar/dreamerv2
+
 ## Questions
 
 Please [open an issue][issues] on Github.
