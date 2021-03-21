@@ -18,7 +18,11 @@ def main():
 
   view = max(args.area) // 2 - 1
   env = crafter.Env(args.area, view, args.size, seed=args.seed)
-  images = [env.reset()['image'] for _ in range(args.amount)]
+  images = []
+  for index in range(args.amount):
+    images.append(env.reset()['image'])
+    diamonds = (env._terrain == crafter.crafter.MATERIAL_IDS['diamond']).sum()
+    print(f'Map: {index:>2}, diamonds: {diamonds:>2}')
 
   rows = len(images) // args.cols
   strips = []

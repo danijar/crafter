@@ -180,10 +180,12 @@ class Player:
         self.achievements.add('make_stone_pickaxe')
     if action == 11:  # make iron pickaxe
       wood = self.inventory['wood']
+      coal = self.inventory['coal']
       iron = self.inventory['iron']
-      if wood and iron and furnace:
+      if wood > 0 and coal > 0 and iron > 0 and table and furnace:
         self.inventory['wood'] -= 1
-        self.inventory['stone'] -= 1
+        self.inventory['coal'] -= 1
+        self.inventory['iron'] -= 1
         self.inventory['iron_pickaxe'] += 1
         self.achievements.add('make_iron_pickaxe')
 
@@ -296,13 +298,15 @@ class Env:
         'make_wood_pickaxe', 'make_stone_pickaxe', 'make_iron_pickaxe',
     ]
 
-  def _noise(self, x, y, z, sizes):
+  def _noise(self, x, y, z, sizes, normalize=True):
     if not isinstance(sizes, dict):
-      sizes = {1: sizes}
+      sizes = {sizes: 1}
     value = 0
-    for weight, size in sizes.items():
+    for size, weight in sizes.items():
       value += weight * self._simplex.noise3d(x / size, y / size, z)
-    return value / sum(sizes.keys())
+    if normalize:
+      value /= sum(sizes.values())
+    return value
 
   def reset(self):
     self._step = 0
@@ -321,7 +325,8 @@ class Env:
         start = 4 - np.sqrt((x - center[0]) ** 2 + (y - center[1]) ** 2)
         start += 2 * simplex(x, y, 8, 3)
         start = 1 / (1 + np.exp(-start))
-        mountain = simplex(x, y, 0, {1: 15, 0.3: 5}) - 3 * start
+        mountain = simplex(x, y, 0, {15: 1, 5: 0.3}) - 3 * start - 0.03
+        water = simplex(x, y, 3, {15: 1, 5: 0.15}, False) - 2 * start + 0.1
         if start > 0.5:
           self._terrain[x, y] = MATERIAL_IDS['grass']
         elif mountain > 0.15:
@@ -331,19 +336,19 @@ class Env:
             self._terrain[x, y] = MATERIAL_IDS['path']
           elif simplex(x / 5, 2 * y, 7, 3) > 0.4:  # vertical tunnle
             self._terrain[x, y] = MATERIAL_IDS['path']
-          elif simplex(x, y, 1, 8) > 0 and uniform() > 0.8:
+          elif simplex(x, y, 1, 8) > 0 and uniform() > 0.85:
             self._terrain[x, y] = MATERIAL_IDS['coal']
-          elif simplex(x, y, 2, 6) > 0.3 and uniform() > 0.6:
+          elif simplex(x, y, 2, 6) > 0.4 and uniform() > 0.75:
             self._terrain[x, y] = MATERIAL_IDS['iron']
-          elif mountain > 0.25 and uniform() > 0.99:
+          elif mountain > 0.18 and uniform() > 0.995:
             self._terrain[x, y] = MATERIAL_IDS['diamond']
           elif mountain > 0.3 and simplex(x, y, 6, 5) > 0.4:
             self._terrain[x, y] = MATERIAL_IDS['lava']
           else:
             self._terrain[x, y] = MATERIAL_IDS['stone']
-        elif 0.25 < simplex(x, y, 3, 15) <= 0.35 and simplex(x, y, 4, 9) > -0.2:
+        elif 0.25 < water <= 0.35 and simplex(x, y, 4, 9) > -0.2:
           self._terrain[x, y] = MATERIAL_IDS['sand']
-        elif simplex(x, y, 3, 15) > 0.3:
+        elif 0.3 < water:
           self._terrain[x, y] = MATERIAL_IDS['water']
         else:  # grassland
           if simplex(x, y, 5, 7) > 0 and uniform() > 0.8:

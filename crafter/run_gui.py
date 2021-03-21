@@ -78,7 +78,7 @@ def main():
     if len(env._player.achievements) > len(achievements):
       for name in env._player.achievements:
         if name not in achievements:
-          print(f'\nAchievement: {name} ({len(env._player.achievements)}/13)')
+          print(f'\nAchievement ({len(env._player.achievements)}/13): {name}')
       achievements = env._player.achievements.copy()
     if not health or health != env._player.health:
       health = env._player.health
@@ -89,7 +89,7 @@ def main():
       for key, value in inventory.items():
         print(f'  {key}: {value}')
     if env._step > 0 and env._step % 100 == 0:
-      print(f'\nTime step: {env._step}/{args.length}')
+      print(f'\nTime step: {env._step}')
     if reward:
       print('\nReward:', reward)
     if done:
