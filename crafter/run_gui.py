@@ -16,7 +16,7 @@ def main():
   parser.add_argument('--area', nargs=2, type=int, default=(64, 64))
   parser.add_argument('--view', type=int, default=6)
   parser.add_argument('--length', type=int, default=None)
-  parser.add_argument('--health', type=int, default=10)
+  parser.add_argument('--health', type=int, default=5)
   parser.add_argument('--window', type=int, default=800)
   parser.add_argument('--record', type=str, default=None)
   parser.add_argument('--fps', type=int, default=5)
@@ -78,18 +78,18 @@ def main():
     if len(env._player.achievements) > len(achievements):
       for name in env._player.achievements:
         if name not in achievements:
-          print('\nAchievement:', name)
+          print(f'\nAchievement: {name} ({len(env._player.achievements)}/13)')
       achievements = env._player.achievements.copy()
     if not health or health != env._player.health:
       health = env._player.health
-      print('\nHealth:', health)
+      print(f'\nHealth: {health}/{args.health}')
     if not inventory or inventory != env._player.inventory:
       inventory = env._player.inventory.copy()
       print('\nInventory:')
       for key, value in inventory.items():
         print(f'  {key}: {value}')
     if env._step > 0 and env._step % 100 == 0:
-      print('\nTime step:', env._step)
+      print(f'\nTime step: {env._step}/{args.length}')
     if reward:
       print('\nReward:', reward)
     if done:

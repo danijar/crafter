@@ -14,7 +14,7 @@ def main():
   parser.add_argument('--view', type=int, default=4)
   parser.add_argument('--size', type=int, default=64)
   parser.add_argument('--length', type=int, default=10000)
-  parser.add_argument('--health', type=int, default=10)
+  parser.add_argument('--health', type=int, default=5)
   parser.add_argument('--record', type=str, default=None)
   args = parser.parse_args()
 

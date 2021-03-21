@@ -114,6 +114,7 @@ class Player:
             self.achievements.add('defeat_zombie')
           if isinstance(obj, Cow) and obj.health <= 0:
             self.health = min(self.health + 1, self._max_health)
+            self._hunger = 0
             self.achievements.add('find_food')
           return
       pickaxe = max(
@@ -201,10 +202,9 @@ class Cow:
   def update(self, terrain, objects, action):
     if self.health <= 0:
       del objects[objects.index(self)]
-    if self._random.uniform() > 0.5:
-      direction = (0, self._random.randint(-1, 2))
-    else:
-      direction = (self._random.randint(-1, 2), 0)
+    if self._random.uniform() < 0.5:
+      return
+    direction = _random_direction(self._random)
     x = self.pos[0] + direction[0]
     y = self.pos[1] + direction[1]
     if _is_free((x, y), terrain, objects):
@@ -239,15 +239,14 @@ class Zombie:
     if dist <= 4:
       xdist = abs(self.pos[0] - player.pos[0])
       ydist = abs(self.pos[1] - player.pos[1])
-      if xdist > ydist and self._random.uniform() < 0.7:
+      if self._random.uniform() < 0.2:
+        direction = _random_direction(self._random)
+      elif xdist > ydist and self._random.uniform() < 0.7:
         direction = (-np.sign(self.pos[0] - player.pos[0]), 0)
       else:
         direction = (0, -np.sign(self.pos[1] - player.pos[1]))
     else:
-      if self._random.uniform() > 0.5:
-        direction = (0, self._random.randint(-1, 2))
-      else:
-        direction = (self._random.randint(-1, 2), 0)
+      direction = _random_direction(self._random)
     x = self.pos[0] + direction[0]
     y = self.pos[1] + direction[1]
     if _is_free((x, y), terrain, objects):
@@ -257,7 +256,7 @@ class Zombie:
 class Env:
 
   def __init__(
-      self, area=(64, 64), view=4, size=64, length=10000, health=10,
+      self, area=(64, 64), view=4, size=64, length=10000, health=5,
       seed=None):
     self._area = area
     self._view = view
@@ -275,6 +274,7 @@ class Env:
     self._objects = None
     self._simplex = None
     self._achievements = None
+    self._last_health = None
 
   @property
   def observation_space(self):
@@ -345,21 +345,24 @@ class Env:
           self._terrain[x, y] = MATERIAL_IDS['sand']
         elif simplex(x, y, 3, 15) > 0.3:
           self._terrain[x, y] = MATERIAL_IDS['water']
-        else:  # grass
+        else:  # grassland
           if simplex(x, y, 5, 7) > 0 and uniform() > 0.8:
             self._terrain[x, y] = MATERIAL_IDS['tree']
           else:
             self._terrain[x, y] = MATERIAL_IDS['grass']
 
     self._player = Player(center, self._health)
+    self._last_health = self._health
     self._achievements = self._player.achievements.copy()
     self._objects = [self._player]
     for x in range(self._area[0]):
       for y in range(self._area[1]):
+        dist = np.sqrt((x - center[0]) ** 2 + (y - center[1]) ** 2)
         if self._terrain[x, y] in WALKABLE:
-          if self._terrain[x, y] == MATERIAL_IDS['grass'] and uniform() > 0.99:
+          grass = self._terrain[x, y] == MATERIAL_IDS['grass']
+          if dist > 3 and grass and uniform() > 0.98:
             self._objects.append(Cow((x, y), self._random))
-          elif uniform() > 0.993:
+          elif dist > 6 and uniform() > 0.993:
             self._objects.append(Zombie((x, y), self._random))
 
     return self._obs()
@@ -373,6 +376,9 @@ class Env:
     if len(self._player.achievements) > len(self._achievements):
       reward = 1.0
       self._achievements = self._player.achievements.copy()
+    # if self._player.health < self._last_health:
+    #   # Reported returns wouldn't be number of achievements anymore.
+    #   reward = -1.0
     dead = self._player.health <= 0
     over = self._length and self._step >= self._length
     done = dead or over
@@ -448,3 +454,10 @@ def _is_free(pos, terrain, objects, valid=WALKABLE):
   if terrain[pos] not in valid: return False
   if any(obj.pos == pos for obj in objects): return False
   return True
+
+
+def _random_direction(random):
+  if random.uniform() > 0.5:
+    return (0, random.randint(-1, 2))
+  else:
+    return (random.randint(-1, 2), 0)
