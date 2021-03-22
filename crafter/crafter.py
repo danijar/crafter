@@ -4,7 +4,7 @@ import gym
 import imageio
 import numpy as np
 import opensimplex
-import skimage.transform
+from PIL import Image
 
 
 TEXTURES = {
@@ -270,6 +270,7 @@ class Env:
     self._grid = self._size // (2 * self._view + 1)
     self._textures = self._load_textures()
     self._terrain = np.zeros(area, np.uint8)
+    self._border = (size - self._grid * (2 * self._view + 1)) // 2
     self._step = None
     self._random = None
     self._player = None
@@ -406,12 +407,6 @@ class Env:
     for obj in self._objects:
       texture = self._textures[obj.texture]
       self._draw(canvas, obj.pos, texture)
-    # used = self._grid * (2 * self._view + 1)
-    # if used != self._size:
-    #   canvas = skimage.transform.resize(
-    #       canvas[:used, :used], (self._size, self._size),
-    #       order=0, anti_aliasing=False,
-    #       preserve_range=True).astype(np.uint8)
     return canvas.transpose((1, 0, 2))
 
   def _obs(self):
@@ -422,12 +417,9 @@ class Env:
     return obs
 
   def _draw(self, canvas, pos, texture):
-    left = self._player.pos[0] - self._view
-    top = self._player.pos[1] - self._view
-    x = self._grid * (pos[0] - left)
-    y = self._grid * (pos[1] - top)
-    w = texture.shape[0]
-    h = texture.shape[1]
+    x = self._grid * (pos[0] + self._view - self._player.pos[0]) + self._border
+    y = self._grid * (pos[1] + self._view - self._player.pos[1]) + self._border
+    w, h = texture.shape[:2]
     if not (0 <= x and x + w <= canvas.shape[0]): return
     if not (0 <= y and y + h <= canvas.shape[1]): return
     if texture.shape[-1] == 4:
@@ -446,9 +438,8 @@ class Env:
       filename = pathlib.Path(__file__).parent / filename
       image = imageio.imread(filename)
       image = image.transpose((1, 0) + tuple(range(2, len(image.shape))))
-      image = skimage.transform.resize(
-          image, (self._grid, self._grid),
-          order=0, anti_aliasing=False, preserve_range=True).astype(np.uint8)
+      image = np.array(Image.fromarray(image).resize(
+        (self._grid, self._grid), resample=Image.NEAREST))
       textures[name] = image
     return textures
 
