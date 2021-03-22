@@ -54,6 +54,40 @@ WALKABLE = {
 }
 
 
+class Objects:
+
+  def __init__(self, area):
+    self._map = np.zeros(area, np.uint32)
+    self._objects = [None]
+
+  def __iter__(self):
+    yield from (obj for obj in self._objects if obj)
+
+  def add(self, obj):
+    assert hasattr(obj, 'pos')
+    assert self.free(obj.pos)
+    self._map[obj.pos] = len(self._objects)
+    self._objects.append(obj)
+
+  def remove(self, obj):
+    self._objects[self._map[obj.pos]] = None
+    self._map[obj.pos] = 0
+
+  def move(self, obj, pos):
+    assert self.free(pos)
+    self._map[pos] = self._map[obj.pos]
+    self._map[obj.pos] = 0
+    obj.pos = pos
+
+  def free(self, pos):
+    if not (0 <= pos[0] < self._map.shape[0]): return False
+    if not (0 <= pos[1] < self._map.shape[1]): return False
+    return self._map[pos] == 0
+
+  def at(self, pos):
+    return self._objects[self._map[pos]]
+
+
 class Player:
 
   def __init__(self, pos, health):
@@ -77,7 +111,7 @@ class Player:
         (0, +1): 'player-down',
     }[self.face]
 
-  def update(self, terrain, objects, action):
+  def update(self, terrain, objects, player, action):
     self._hunger += 1
     if self._hunger > 100:
       self.health -= 1
@@ -90,9 +124,9 @@ class Player:
       self.face = direction[action - 1]
       target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
       if _is_free(target, terrain, objects):
-        self.pos = target
-      if _is_free(target, terrain, objects, ['lava']):
-        self.pos = target
+        objects.move(self, target)
+      elif _is_free(target, terrain, objects, [MATERIAL_IDS['lava']]):
+        objects.move(self, target)
         self.health = 0
       return
     target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
@@ -107,16 +141,19 @@ class Player:
     water = material_name in ('water',)
     lava = material_name in ('lava',)
     if action == 5:  # grab or attack
-      for obj in objects:
-        if obj.pos == target and hasattr(obj, 'health'):
+      obj = objects.at(target)
+      if obj:
+        if isinstance(obj, Zombie):
           obj.health -= 1
-          if isinstance(obj, Zombie) and obj.health <= 0:
+          if obj.health <= 0:
             self.achievements.add('defeat_zombie')
-          if isinstance(obj, Cow) and obj.health <= 0:
+        if isinstance(obj, Cow):
+          obj.health -= 1
+          if obj.health <= 0:
             self.health = min(self.health + 1, self._max_health)
             self._hunger = 0
             self.achievements.add('find_food')
-          return
+        return
       pickaxe = max(
           1 if self.inventory['wood_pickaxe'] else 0,
           2 if self.inventory['stone_pickaxe'] else 0,
@@ -201,16 +238,16 @@ class Cow:
   def texture(self):
     return 'cow'
 
-  def update(self, terrain, objects, action):
+  def update(self, terrain, objects, player, action):
     if self.health <= 0:
-      del objects[objects.index(self)]
+      objects.remove(self)
     if self._random.uniform() < 0.5:
       return
     direction = _random_direction(self._random)
     x = self.pos[0] + direction[0]
     y = self.pos[1] + direction[1]
     if _is_free((x, y), terrain, objects):
-      self.pos = (x, y)
+      objects.move(self, (x, y))
 
 
 class Zombie:
@@ -225,10 +262,9 @@ class Zombie:
   def texture(self):
     return 'zombie'
 
-  def update(self, terrain, objects, action):
+  def update(self, terrain, objects, player, action):
     if self.health <= 0:
-      del objects[objects.index(self)]
-    player = [obj for obj in objects if isinstance(obj, Player)][0]
+      objects.remove(self)
     dist = np.sqrt(
         (self.pos[0] - player.pos[0]) ** 2 +
         (self.pos[1] - player.pos[1]) ** 2)
@@ -252,7 +288,7 @@ class Zombie:
     x = self.pos[0] + direction[0]
     y = self.pos[1] + direction[1]
     if _is_free((x, y), terrain, objects):
-      self.pos = (x, y)
+      objects.move(self, (x, y))
 
 
 class Env:
@@ -360,23 +396,24 @@ class Env:
     self._player = Player(center, self._health)
     self._last_health = self._health
     self._achievements = self._player.achievements.copy()
-    self._objects = [self._player]
+    self._objects = Objects(self._area)
+    self._objects.add(self._player)
     for x in range(self._area[0]):
       for y in range(self._area[1]):
         dist = np.sqrt((x - center[0]) ** 2 + (y - center[1]) ** 2)
         if self._terrain[x, y] in WALKABLE:
           grass = self._terrain[x, y] == MATERIAL_IDS['grass']
           if dist > 3 and grass and uniform() > 0.98:
-            self._objects.append(Cow((x, y), self._random))
+            self._objects.add(Cow((x, y), self._random))
           elif dist > 6 and uniform() > 0.993:
-            self._objects.append(Zombie((x, y), self._random))
+            self._objects.add(Zombie((x, y), self._random))
 
     return self._obs()
 
   def step(self, action):
     self._step += 1
     for obj in self._objects:
-      obj.update(self._terrain, self._objects, action)
+      obj.update(self._terrain, self._objects, self._player, action)
     obs = self._obs()
     reward = 0.0
     if len(self._player.achievements) > len(self._achievements):
@@ -411,12 +448,14 @@ class Env:
 
   def _obs(self):
     obs = {'image': self.render()}
-    obs['health'] = np.clip(self._player.health, 0, 255).astype(np.uint8)
-    for key, value in self._player.inventory.items():
-      obs[key] = np.clip(value, 0, 255).astype(np.uint8)
+    obs['health'] = _uint8(self._player.health)
+    obs.update({k: _uint8(v) for k, v in self._player.inventory.items()})
+    # for key, value in self._player.inventory.items():
+    #   obs[key] = np.clip(value, 0, 255).astype(np.uint8)
     return obs
 
   def _draw(self, canvas, pos, texture):
+    # TODO: This function is slow.
     x = self._grid * (pos[0] + self._view - self._player.pos[0]) + self._border
     y = self._grid * (pos[1] + self._view - self._player.pos[1]) + self._border
     w, h = texture.shape[:2]
@@ -448,7 +487,7 @@ def _is_free(pos, terrain, objects, valid=WALKABLE):
   if not (0 <= pos[0] < terrain.shape[0]): return False
   if not (0 <= pos[1] < terrain.shape[1]): return False
   if terrain[pos] not in valid: return False
-  if any(obj.pos == pos for obj in objects): return False
+  if not objects.free(pos): return False
   return True
 
 
@@ -457,3 +496,8 @@ def _random_direction(random):
     return (0, random.randint(-1, 2))
   else:
     return (random.randint(-1, 2), 0)
+
+
+def _uint8(value):
+  # return np.clip(value, 0, 255).astype(np.uint8)
+  return np.array(max(0, min(value, 255)), dtype=np.uint8)

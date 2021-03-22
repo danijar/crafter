@@ -152,13 +152,13 @@ one of the 12 possible actions:
 | 2 | `right` | Flat ground right to the agent. |
 | 3 | `up` | Flat ground above the agent. |
 | 4 | `down` | Flat ground below the agent. |
-| 5 | `grab_or_attack` | Facing creature or material and has necessary tool. |
+| 5 | `grab_or_attack` | Facing creature or material. Made necessary tool. |
 | 6 | `place_stone` | Stone in inventory. |
 | 7 | `place_table` | Wood in inventory. |
 | 8 | `place_furnace` | Stone in inventory. |
-| 9 | `make_wood_pickaxe` | Nearby table and wood in inventory. |
-| 10 | `make_stone_pickaxe` | Nearby table and wood, stone in inventory. |
-| 11 | `make_iron_pickaxe` | Nearby furnace and wood, coal, iron an inventory. |
+| 9 | `make_wood_pickaxe` | Nearby table. Wood in inventory. |
+| 10 | `make_stone_pickaxe` | Nearby table. Wood, stone in inventory. |
+| 11 | `make_iron_pickaxe` | Nearby table, furnace. Wood, coal, iron an inventory. |
 
 ## Baselines
 
