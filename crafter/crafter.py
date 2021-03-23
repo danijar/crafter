@@ -80,11 +80,11 @@ class Objects:
     obj.pos = pos
 
   def free(self, pos):
-    if not (0 <= pos[0] < self._map.shape[0]): return False
-    if not (0 <= pos[1] < self._map.shape[1]): return False
-    return self._map[pos] == 0
+    return self.at(pos) == None
 
   def at(self, pos):
+    if not (0 <= pos[0] < self._map.shape[0]): return False
+    if not (0 <= pos[1] < self._map.shape[1]): return False
     return self._objects[self._map[pos]]
 
 
