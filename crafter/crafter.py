@@ -362,8 +362,10 @@ class Env:
         start = 4 - np.sqrt((x - center[0]) ** 2 + (y - center[1]) ** 2)
         start += 2 * simplex(x, y, 8, 3)
         start = 1 / (1 + np.exp(-start))
-        mountain = simplex(x, y, 0, {15: 1, 5: 0.3}) - 3 * start - 0.03
-        water = simplex(x, y, 3, {15: 1, 5: 0.15}, False) - 2 * start + 0.1
+        water = simplex(x, y, 3, {15: 1, 5: 0.15}, False) + 0.1
+        water -= 2 * start
+        mountain = simplex(x, y, 0, {15: 1, 5: 0.3})
+        mountain -= 4 * start + 0.3 * water
         if start > 0.5:
           self._terrain[x, y] = MATERIAL_IDS['grass']
         elif mountain > 0.15:
