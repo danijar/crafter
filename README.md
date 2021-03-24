@@ -98,8 +98,8 @@ crafter.Env(area=(64, 64), view=4, size=64, length=10000, seed=None)
 The reward can either be given to the agent or used as a proxy metric for
 evaluating unsupervised agents.
 
-The reward is +1 when the agent unlocks a new achievement, -1 when its health
-level decreases, +1 when it increases, and 0 for all other time steps. The 13
+The reward is +1 when the agent unlocks a new achievement, -0.1 when its health
+level decreases, +0.1 when it increases, and 0 for all other time steps. The 13
 achievements are as follows:
 
 - `find_food`
@@ -119,8 +119,8 @@ achievements are as follows:
 The set of unlocked achievements can also be accessed via the `info`
 dictionary.
 
-The sum of rewards per episode can range from -5 (losing all health without any
-achivement) to 13 (unlocking all achievements and keeping or restoring all
+The sum of rewards per episode can range from -0.5 (losing all health without
+any achivement) to 13 (unlocking all achievements and keeping or restoring all
 health).
 
 ### Termination
