@@ -95,10 +95,12 @@ crafter.Env(area=(64, 64), view=4, size=64, length=10000, seed=None)
 
 ### Reward
 
-The reward is sparse. It can either be given to the agent or used as a proxy
-metric for evaluating unsupervised agents. The reward is 1 when the agent
-unlocks a new achievement and 0 for all other time steps. The list of
-achievements is as follows:
+The reward can either be given to the agent or used as a proxy metric for
+evaluating unsupervised agents.
+
+The reward is +1 when the agent unlocks a new achievement, -1 when its health
+level decreases, +1 when it increases, and 0 for all other time steps. The 13
+achievements are as follows:
 
 - `find_food`
 - `defeat_zombie`
@@ -117,10 +119,14 @@ achievements is as follows:
 The set of unlocked achievements can also be accessed via the `info`
 dictionary.
 
+The sum of rewards per episode can range from -5 (losing all health without any
+achivement) to 13 (unlocking all achievements and keeping or restoring all
+health).
+
 ### Termination
 
 The episode terminates when the health points of the agent reach zero. Episodes
-also end when reaching a time limit, which is 100,000 steps by default.
+also end when reaching a time limit, which is 10000 steps by default.
 
 ### Observation Space
 
@@ -152,7 +158,7 @@ one of the 12 possible actions:
 | 2 | `right` | Flat ground right to the agent. |
 | 3 | `up` | Flat ground above the agent. |
 | 4 | `down` | Flat ground below the agent. |
-| 5 | `grab_or_attack` | Facing creature or material. Made necessary tool. |
+| 5 | `interact` | Facing creature or material and have necessary tool. |
 | 6 | `place_stone` | Stone in inventory. |
 | 7 | `place_table` | Wood in inventory. |
 | 8 | `place_furnace` | Stone in inventory. |

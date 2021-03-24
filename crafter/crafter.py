@@ -330,7 +330,7 @@ class Env:
   @property
   def action_names(self):
     return [
-        'noop', 'left', 'right', 'up', 'down', 'grab_or_attack',
+        'noop', 'left', 'right', 'up', 'down', 'interact',
         'place_stone', 'place_table', 'place_furnace',
         'make_wood_pickaxe', 'make_stone_pickaxe', 'make_iron_pickaxe',
     ]
@@ -417,13 +417,17 @@ class Env:
     for obj in self._objects:
       obj.update(self._terrain, self._objects, self._player, action)
     obs = self._obs()
-    reward = 0.0
     if len(self._player.achievements) > len(self._achievements):
-      reward = 1.0
       self._achievements = self._player.achievements.copy()
-    # if self._player.health < self._last_health:
-    #   # Reported returns wouldn't be number of achievements anymore.
-    #   reward = -1.0
+      reward = +1.0
+    elif self._player.health < self._last_health:
+      self._last_health = self._player.health
+      reward = -1.0
+    elif self._player.health > self._last_health:
+      self._last_health = self._player.health
+      reward = +1.0
+    else:
+      reward = 0.0
     dead = self._player.health <= 0
     over = self._length and self._step >= self._length
     done = dead or over
