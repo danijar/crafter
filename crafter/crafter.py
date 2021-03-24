@@ -80,7 +80,7 @@ class Objects:
     obj.pos = pos
 
   def free(self, pos):
-    return self.at(pos) == None
+    return self.at(pos) is None
 
   def at(self, pos):
     if not (0 <= pos[0] < self._map.shape[0]): return False
@@ -484,7 +484,7 @@ class Env:
       image = imageio.imread(filename)
       image = image.transpose((1, 0) + tuple(range(2, len(image.shape))))
       image = np.array(Image.fromarray(image).resize(
-        (self._grid, self._grid), resample=Image.NEAREST))
+          (self._grid, self._grid), resample=Image.NEAREST))
       textures[name] = image
     return textures
 
