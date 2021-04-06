@@ -319,7 +319,8 @@ class Env:
   def observation_space(self):
     shape = (self._size, self._size, 3)
     spaces = {'image': gym.spaces.Box(0, 255, shape, np.uint8)}
-    for key in list(Player((0, 0)).inventory.keys()) + ['health']:
+    inventory = Player((0, 0), self._health).inventory
+    for key in list(inventory.keys()) + ['health']:
       spaces[key] = gym.spaces.Box(0, 255, (), np.uint8)
     return gym.spaces.Dict(spaces)
 
