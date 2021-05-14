@@ -1,6 +1,6 @@
+import collections
 import pathlib
 
-import gym
 import imageio
 import numpy as np
 import opensimplex
@@ -52,6 +52,11 @@ WALKABLE = {
     MATERIAL_IDS['path'],
     MATERIAL_IDS['sand'],
 }
+
+
+DiscreteSpace = collections.namedtuple('DiscreteSpace', 'n')
+BoxSpace = collections.namedtuple('BoxSpace', 'low, high, shape, dtype')
+DictSpace = collections.namedtuple('DictSpace', 'spaces')
 
 
 class Objects:
@@ -318,15 +323,15 @@ class Env:
   @property
   def observation_space(self):
     shape = (self._size, self._size, 3)
-    spaces = {'image': gym.spaces.Box(0, 255, shape, np.uint8)}
+    spaces = {'image': BoxSpace(0, 255, shape, np.uint8)}
     inventory = Player((0, 0), self._health).inventory
     for key in list(inventory.keys()) + ['health']:
-      spaces[key] = gym.spaces.Box(0, 255, (), np.uint8)
-    return gym.spaces.Dict(spaces)
+      spaces[key] = BoxSpace(0, 255, (), np.uint8)
+    return DictSpace(spaces)
 
   @property
   def action_space(self):
-    return gym.spaces.Discrete(12)
+    return DiscreteSpace(12)
 
   @property
   def action_names(self):
