@@ -43,11 +43,11 @@ The following optional command line flags are available:
 
 | Flag | Default | Description |
 | :--- | :-----: | :---------- |
-| `--window <size>` | 800 | Window size in pixels, used as width and height. |
+| `--window <width> <height>` | 1280 720 | Window size in pixels, used as width and height. |
 | `--fps <integer>` | 5 | How many times to update the environment per second. |
 | `--record <filename>.mp4` | None | Record a video of the trajectory. |
 | `--area <width> <height>` | 64 64 | The size of the world in cells. |
-| `--view <distance>` | 6 | The view distance of the player in cells. |
+| `--view <width> <height>` | 23 13 | The layout size in cells; determines view distance. |
 | `--length <integer>` | None | Time limit for the episode. |
 | `--seed <integer>` | None | Determines world generation and creatures. |
 
@@ -81,14 +81,14 @@ default configuration. Nonetheless, the environment can be configured via its
 constructor:
 
 ```py
-crafter.Env(area=(64, 64), view=4, size=64, length=10000, seed=None)
+crafter.Env(area=(64, 64), view=(9, 9), size=(64, 64), length=10000, seed=None)
 ```
 
 | Parameter | Default | Description |
 | :-------- | :------ | :---------- |
 | `area` | `(64, 64)` | Size of the world in cells. |
-| `view` | `4` | View distance of the player in cells. |
-| `size` | `64` | Render size of the images, used for both width and height. |
+| `view` | `(9, 9)` | Layout size in cells; determines view distance. |
+| `size` | `(64, 64)` | Render size of the images. |
 | `length` | `10000` | Time limit for the episode, can be `None`. |
 | `health` | `10` | Initial health level of the player. |
 | `seed` | None | Interger that determines world generation and creatures. |
@@ -154,11 +154,11 @@ one of the 12 possible actions:
 | Integer | Name | Requirement |
 | :-----: | :--- | :---------- |
 | 0 | `noop` | Always applicable. |
-| 1 | `left` | Flat ground left to the agent. |
-| 2 | `right` | Flat ground right to the agent. |
-| 3 | `up` | Flat ground above the agent. |
-| 4 | `down` | Flat ground below the agent. |
-| 5 | `interact` | Facing creature or material and have necessary tool. |
+| 1 | `move_left` | Flat ground left to the agent. |
+| 2 | `move_right` | Flat ground right to the agent. |
+| 3 | `move_up` | Flat ground above the agent. |
+| 4 | `move_down` | Flat ground below the agent. |
+| 5 | `do` | Facing creature or material and have necessary tool. |
 | 6 | `place_stone` | Stone in inventory. |
 | 7 | `place_table` | Wood in inventory. |
 | 8 | `place_furnace` | Stone in inventory. |

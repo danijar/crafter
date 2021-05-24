@@ -57,23 +57,3 @@ make:
   wood_pickaxe: {uses: {wood: 1}, nearby: [table]}
   stone_pickaxe: {uses: {wood: 1, stone: 1}, nearby: [table]}
   iron_pickaxe: {uses: {wood: 1, coal: 1, iron: 1}, nearby: [table, furnace]}
-
-textures:
-  water: assets/water.png
-  grass: assets/grass.png
-  stone: assets/stone.png
-  path: assets/path.png
-  sand: assets/sand.png
-  tree: assets/tree.png
-  coal: assets/coal.png
-  iron: assets/iron.png
-  diamond: assets/diamond.png
-  lava: assets/lava.png
-  table: assets/table.png
-  furnace: assets/furnace.png
-  player-left: assets/player-left.png
-  player-right: assets/player-right.png
-  player-up: assets/player-up.png
-  player-down: assets/player-down.png
-  cow: assets/cow.png
-  zombie: assets/zombie.png

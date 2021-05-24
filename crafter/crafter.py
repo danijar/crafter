@@ -7,8 +7,8 @@ import ruamel.yaml as yaml
 from . import engine
 
 
-DATA = engine.AttrDict(yaml.safe_load(
-    (pathlib.Path(__file__).parent / 'data.yaml').read_text()))
+ROOT = pathlib.Path(__file__).parent
+DATA = engine.AttrDict(yaml.safe_load((ROOT / 'data.yaml').read_text()))
 
 
 class Player:
@@ -178,23 +178,27 @@ class Zombie:
 class Env:
 
   def __init__(
-      self, area=(64, 64), view=(4, 4), size=(64, 64), length=10000, health=5,
+      self, area=(64, 64), view=(9, 9), size=(64, 64), length=10000, health=5,
       seed=None):
     view = np.array(view if hasattr(view, '__len__') else (view, view))
     size = np.array(size if hasattr(size, '__len__') else (size, size))
+    unit = size // view
     self._area = area
     self._size = size
     self._length = length
     self._health = health
     self._seed = seed
     self._episode = 0
-    self._grid = size // (2 * view + 1)
-    self._border = (size - self._grid * (2 * view + 1)) // 2
-    self._textures = engine.Textures(DATA.textures, self._grid)
+    self._border = (size - unit * view) // 2
+    self._textures = engine.Textures(ROOT / 'assets')
     self._terrain = engine.Terrain(DATA.materials, area)
     self._objects = engine.Objects(area)
-    self._view = engine.LocalView(
-        self._terrain, self._objects, self._textures, self._grid, view)
+    item_rows = int(np.ceil(len(DATA['items']) / view[0]))
+    self._local_view = engine.LocalView(
+        self._terrain, self._objects, self._textures, unit,
+        [view[0], view[1] - item_rows])
+    self._item_view = engine.ItemView(
+        self._textures, unit, [view[0], item_rows])
     self._step = None
     self._random = None
     self._player = None
@@ -318,10 +322,15 @@ class Env:
     return obs, reward, done, info
 
   def render(self):
-    canvas = np.zeros(tuple(self._size) + (3,), np.uint8) + 127
-    image = self._view(self._player)
-    (x, y), (w, h) = self._border, image.shape[:2]
-    canvas[x: x + w, y: y + h] = image
+    canvas = np.zeros(tuple(self._size) + (3,), np.uint8)
+    local_view = self._local_view(self._player)
+    item_view = self._item_view({
+        'heart': self._player.health,
+        **self._player.inventory})
+    view = local_view
+    view = np.concatenate([local_view, item_view], 1)
+    (x, y), (w, h) = self._border, view.shape[:2]
+    canvas[x: x + w, y: y + h] = view
     return canvas.transpose((1, 0, 2))
 
   def _obs(self):
