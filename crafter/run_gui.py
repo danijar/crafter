@@ -34,6 +34,9 @@ def main():
       pygame.K_4: 'make_wood_pickaxe',
       pygame.K_5: 'make_stone_pickaxe',
       pygame.K_6: 'make_iron_pickaxe',
+      pygame.K_7: 'make_wood_sword',
+      pygame.K_8: 'make_stone_sword',
+      pygame.K_9: 'make_iron_sword',
   }
   print('Actions:')
   for key, action in keymap.items():
@@ -90,7 +93,7 @@ def main():
       return_ += reward
     if done and not was_done:
       was_done = True
-      messages.append('Episode done')
+      messages.append('Episode done!')
     if messages:
       print('\n'.join(messages), sep='')
 

@@ -11,6 +11,9 @@ actions:
   - make_wood_pickaxe
   - make_stone_pickaxe
   - make_iron_pickaxe
+  - make_wood_sword
+  - make_stone_sword
+  - make_iron_sword
 
 materials:
   - water
@@ -40,6 +43,9 @@ items:
   - wood_pickaxe
   - stone_pickaxe
   - iron_pickaxe
+  - wood_sword
+  - stone_sword
+  - iron_sword
 
 collect:
   tree: {require: {}, receive: {wood: 1}, leaves: grass}
@@ -57,6 +63,9 @@ make:
   wood_pickaxe: {uses: {wood: 1}, nearby: [table]}
   stone_pickaxe: {uses: {wood: 1, stone: 1}, nearby: [table]}
   iron_pickaxe: {uses: {wood: 1, coal: 1, iron: 1}, nearby: [table, furnace]}
+  wood_sword: {uses: {wood: 1}, nearby: [table]}
+  stone_sword: {uses: {wood: 1, stone: 1}, nearby: [table]}
+  iron_sword: {uses: {wood: 1, coal: 1, iron: 1}, nearby: [table, furnace]}
 
 achievements:
   - collect_coal
@@ -69,6 +78,9 @@ achievements:
   - make_iron_pickaxe
   - make_stone_pickaxe
   - make_wood_pickaxe
+  - make_iron_sword
+  - make_stone_sword
+  - make_wood_sword
   - place_furnace
   - place_stone
   - place_table

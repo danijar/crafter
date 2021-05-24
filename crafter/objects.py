@@ -58,12 +58,18 @@ class Player:
       self.health = 0
 
   def _interact(self, obj):
+    damage = max([
+        1,
+        self.inventory['wood_sword'] and 2,
+        self.inventory['stone_sword'] and 3,
+        self.inventory['iron_sword'] and 5,
+    ])
     if isinstance(obj, Zombie):
-      obj.health -= 1
+      obj.health -= damage
       if obj.health <= 0:
         self.achievements['defeat_zombie'] += 1
     if isinstance(obj, Cow):
-      obj.health -= 1
+      obj.health -= damage
       if obj.health <= 0:
         self.health = min(self.health + 1, self._max_health)
         self._hunger = 0
@@ -108,7 +114,7 @@ class Cow:
 
   def __init__(self, pos, random):
     self.pos = pos
-    self.health = 1
+    self.health = 3
     self._random = random
 
   @property
@@ -131,7 +137,7 @@ class Zombie:
 
   def __init__(self, pos, random):
     self.pos = pos
-    self.health = 1
+    self.health = 5
     self._random = random
     self._near = False
 
