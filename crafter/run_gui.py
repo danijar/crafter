@@ -23,11 +23,11 @@ def main():
   args = parser.parse_args()
 
   keymap = {
-      pygame.K_a: 'left',
-      pygame.K_d: 'right',
-      pygame.K_w: 'up',
-      pygame.K_s: 'down',
-      pygame.K_SPACE: 'interact',
+      pygame.K_a: 'move_left',
+      pygame.K_d: 'move_right',
+      pygame.K_w: 'move_up',
+      pygame.K_s: 'move_down',
+      pygame.K_SPACE: 'do',
       pygame.K_1: 'place_stone',
       pygame.K_2: 'place_table',
       pygame.K_3: 'place_furnace',

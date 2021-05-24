@@ -1,36 +1,14 @@
+import pathlib
+
 import numpy as np
 import opensimplex
+import ruamel.yaml as yaml
 
 from . import engine
 
 
-TEXTURES = {
-    'water': 'assets/water.png',
-    'grass': 'assets/grass.png',
-    'stone': 'assets/stone.png',
-    'path': 'assets/path.png',
-    'sand': 'assets/sand.png',
-    'tree': 'assets/tree.png',
-    'coal': 'assets/coal.png',
-    'iron': 'assets/iron.png',
-    'diamond': 'assets/diamond.png',
-    'lava': 'assets/lava.png',
-    'table': 'assets/table.png',
-    'furnace': 'assets/furnace.png',
-    'player-left': 'assets/player-left.png',
-    'player-right': 'assets/player-right.png',
-    'player-up': 'assets/player-up.png',
-    'player-down': 'assets/player-down.png',
-    'cow': 'assets/cow.png',
-    'zombie': 'assets/zombie.png',
-}
-
-MATERIALS = [
-    'water', 'grass', 'stone', 'path', 'sand', 'tree', 'lava', 'coal', 'iron',
-    'diamond', 'table', 'furnace',
-]
-
-WALKABLE = ['grass', 'path', 'sand']
+DATA = engine.AttrDict(yaml.safe_load(
+    (pathlib.Path(__file__).parent / 'data.yaml').read_text()))
 
 
 class Player:
@@ -39,10 +17,7 @@ class Player:
     self.pos = pos
     self.face = (0, 1)
     self.health = health
-    self.inventory = {
-        'wood': 0, 'stone': 0, 'coal': 0, 'iron': 0, 'diamond': 0,
-        'wood_pickaxe': 0, 'stone_pickaxe': 0, 'iron_pickaxe': 0,
-    }
+    self.inventory = {item: 0 for item in DATA['items']}
     self.achievements = set()
     self._max_health = health
     self._hunger = 0
@@ -61,112 +36,79 @@ class Player:
     if self._hunger > 100:
       self.health -= 1
       self._hunger = 0
-    if action == 0:
-      return  # noop
-    if 1 <= action <= 4:
-      # left, right, up, down
-      direction = [(-1, 0), (+1, 0), (0, -1), (0, +1)]
-      self.face = direction[action - 1]
-      target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
-      if _is_free(target, terrain, objects):
-        objects.move(self, target)
-      elif _is_free(target, terrain, objects, ['lava']):
-        objects.move(self, target)
-        self.health = 0
-      return
     target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
-    area = terrain.area
-    if (0 <= target[0] < area[0]) and (0 <= target[1] < area[1]):
-      material = terrain[target]
-    else:
-      material = -1
-      material = 'out_of_bounds'
-    empty = material in ('grass', 'sand', 'path')
-    water = material in ('water',)
-    lava = material in ('lava',)
-    if action == 5:  # grab or attack
-      obj = objects.at(target)
-      if obj:
-        if isinstance(obj, Zombie):
-          obj.health -= 1
-          if obj.health <= 0:
-            self.achievements.add('defeat_zombie')
-        if isinstance(obj, Cow):
-          obj.health -= 1
-          if obj.health <= 0:
-            self.health = min(self.health + 1, self._max_health)
-            self._hunger = 0
-            self.achievements.add('find_food')
+    material = terrain[target] or 'end_of_world'
+    obj = objects.at(target)
+    action = DATA.actions[action]
+    if action == 'noop':
+      pass
+    elif action.startswith('move_'):
+      self._move(action[len('move_'):], terrain, objects)
+    elif action == 'do' and obj:
+      self._interact(obj)
+    elif action == 'do':
+      self._collect(terrain, target, material)
+    elif action.startswith('place_'):
+      self._place(action[len('place_'):], terrain, target, material)
+    elif action.startswith('make_'):
+      self._make(action[len('make_'):], terrain.nearby(self.pos, 2))
+
+  def _move(self, direction, terrain, objects):
+    directions = dict(left=(-1, 0), right=(+1, 0), up=(0, -1), down=(0, +1))
+    self.face = directions[direction]
+    target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
+    if _is_free(target, terrain, objects):
+      objects.move(self, target)
+    elif _is_free(target, terrain, objects, ['lava']):
+      objects.move(self, target)
+      self.health = 0
+    return
+
+  def _interact(self, obj):
+    if isinstance(obj, Zombie):
+      obj.health -= 1
+      if obj.health <= 0:
+        self.achievements.add('defeat_zombie')
+    if isinstance(obj, Cow):
+      obj.health -= 1
+      if obj.health <= 0:
+        self.health = min(self.health + 1, self._max_health)
+        self._hunger = 0
+        self.achievements.add('find_food')
+
+  def _collect(self, terrain, target, material):
+    info = DATA.collect.get(material)
+    if not info:
+      return
+    for name, amount in info['require'].items():
+      if self.inventory[name] < amount:
         return
-      pickaxe = max(
-          1 if self.inventory['wood_pickaxe'] else 0,
-          2 if self.inventory['stone_pickaxe'] else 0,
-          3 if self.inventory['iron_pickaxe'] else 0)
-      if material == 'tree':
-        terrain[target] = 'grass'
-        self.inventory['wood'] += 1
-        self.achievements.add('collect_wood')
-      elif material == 'stone' and pickaxe > 0:
-        terrain[target] = 'path'
-        self.inventory['stone'] += 1
-        self.achievements.add('collect_stone')
-      elif material == 'coal' and pickaxe > 0:
-        terrain[target] = 'path'
-        self.inventory['coal'] += 1
-        self.achievements.add('collect_coal')
-      elif material == 'iron' and pickaxe > 1:
-        terrain[target] = 'path'
-        self.inventory['iron'] += 1
-        self.achievements.add('collect_iron')
-      elif material == 'diamond' and pickaxe > 2:
-        terrain[target] = 'path'
-        self.inventory['diamond'] += 1
-        self.achievements.add('collect_diamond')
+    terrain[target] = info['leaves']
+    for name, amount in info['receive'].items():
+      self.inventory[name] += 1
+    self.achievements.add(f'collect_{material}')
+
+  def _place(self, name, terrain, target, material):
+    info = DATA.place[name]
+    if material not in info['where']:
       return
-    if action == 6:  # place stone
-      if self.inventory['stone'] > 0 and (empty or water or lava):
-        terrain[target] = 'stone'
-        self.inventory['stone'] -= 1
-        self.achievements.add('place_stone')
+    if any(self.inventory[k] < v for k, v in info['uses'].items()):
       return
-    if action == 7:  # place table
-      if self.inventory['wood'] > 0 and empty:
-        terrain[target] = 'table'
-        self.inventory['wood'] -= 1
-        self.achievements.add('place_table')
+    for item, amount in info['uses'].items():
+      self.inventory[item] -= amount
+    terrain[target] = name
+    self.achievements.add(f'place_{name}')
+
+  def _make(self, name, nearby):
+    info = DATA.make[name]
+    if not all(util in nearby for util in info['nearby']):
       return
-    if action == 8:  # place furnace
-      if self.inventory['stone'] > 0 and empty:
-        terrain[target] = 'furnace'
-        self.inventory['stone'] -= 1
-        self.achievements.add('place_furnace')
+    if any(self.inventory[k] < v for k, v in info['uses'].items()):
       return
-    nearby = terrain.nearby(self.pos, 2)
-    table = ('table' in nearby)
-    furnace = ('furnace' in nearby)
-    if action == 9:  # make wood pickaxe
-      if self.inventory['wood'] > 0 and table:
-        self.inventory['wood'] -= 1
-        self.inventory['wood_pickaxe'] += 1
-        self.achievements.add('make_wood_pickaxe')
-    if action == 10:  # make stone pickaxe
-      wood = self.inventory['wood']
-      stone = self.inventory['stone']
-      if wood > 0 and stone > 0 and table:
-        self.inventory['wood'] -= 1
-        self.inventory['stone'] -= 1
-        self.inventory['stone_pickaxe'] += 1
-        self.achievements.add('make_stone_pickaxe')
-    if action == 11:  # make iron pickaxe
-      wood = self.inventory['wood']
-      coal = self.inventory['coal']
-      iron = self.inventory['iron']
-      if wood > 0 and coal > 0 and iron > 0 and table and furnace:
-        self.inventory['wood'] -= 1
-        self.inventory['coal'] -= 1
-        self.inventory['iron'] -= 1
-        self.inventory['iron_pickaxe'] += 1
-        self.achievements.add('make_iron_pickaxe')
+    for item, amount in info['uses'].items():
+      self.inventory[item] -= amount
+    self.inventory[name] += 1
+    self.achievements.add(f'make_{name}')
 
 
 class Cow:
@@ -248,8 +190,8 @@ class Env:
     self._episode = 0
     self._grid = size // (2 * view + 1)
     self._border = (size - self._grid * (2 * view + 1)) // 2
-    self._textures = engine.Textures(TEXTURES, self._grid)
-    self._terrain = engine.Terrain(MATERIALS, area)
+    self._textures = engine.Textures(DATA.textures, self._grid)
+    self._terrain = engine.Terrain(DATA.materials, area)
     self._objects = engine.Objects(area)
     self._view = engine.LocalView(
         self._terrain, self._objects, self._textures, self._grid, view)
@@ -271,15 +213,11 @@ class Env:
 
   @property
   def action_space(self):
-    return engine.DiscreteSpace(12)
+    return engine.DiscreteSpace(len(DATA.actions))
 
   @property
   def action_names(self):
-    return [
-        'noop', 'left', 'right', 'up', 'down', 'interact',
-        'place_stone', 'place_table', 'place_furnace',
-        'make_wood_pickaxe', 'make_stone_pickaxe', 'make_iron_pickaxe',
-    ]
+    return DATA.actions
 
   def _noise(self, x, y, z, sizes, normalize=True):
     if not isinstance(sizes, dict):
@@ -347,7 +285,7 @@ class Env:
     for x in range(self._area[0]):
       for y in range(self._area[1]):
         dist = np.sqrt((x - center[0]) ** 2 + (y - center[1]) ** 2)
-        if self._terrain[x, y] in WALKABLE:
+        if self._terrain[x, y] in DATA.walkable:
           grass = (self._terrain[x, y] == 'grass')
           if dist > 3 and grass and uniform() > 0.98:
             self._objects.add(Cow((x, y), self._random))
@@ -393,7 +331,7 @@ class Env:
     return obs
 
 
-def _is_free(pos, terrain, objects, valid=WALKABLE):
+def _is_free(pos, terrain, objects, valid=DATA.walkable):
   if not (0 <= pos[0] < terrain.area[0]):
     return False
   if not (0 <= pos[1] < terrain.area[1]):

@@ -12,7 +12,8 @@ setuptools.setup(
     packages=['crafter'],
     package_data={'crafter': ['assets/*']},
     entry_points={'console_scripts': ['crafter=crafter.run_gui:main']},
-    install_requires=['numpy', 'imageio', 'pillow', 'opensimplex'],
+    install_requires=[
+        'numpy', 'imageio', 'pillow', 'opensimplex', 'ruamel.yaml'],
     extras_require={'gui': ['pygame']},
     classifiers=[
         'Intended Audience :: Science/Research',

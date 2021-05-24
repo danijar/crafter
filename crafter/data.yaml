@@ -1,0 +1,79 @@
+actions:
+  - noop
+  - move_left
+  - move_right
+  - move_up
+  - move_down
+  - do
+  - place_stone
+  - place_table
+  - place_furnace
+  - make_wood_pickaxe
+  - make_stone_pickaxe
+  - make_iron_pickaxe
+
+materials:
+  - water
+  - grass
+  - stone
+  - path
+  - sand
+  - tree
+  - lava
+  - coal
+  - iron
+  - diamond
+  - table
+  - furnace
+
+walkable:
+  - grass
+  - path
+  - sand
+
+items:
+  - wood
+  - stone
+  - coal
+  - iron
+  - diamond
+  - wood_pickaxe
+  - stone_pickaxe
+  - iron_pickaxe
+
+collect:
+  tree: {require: {}, receive: {wood: 1}, leaves: grass}
+  stone: {require: {wood_pickaxe: 1}, receive: {stone: 1}, leaves: path}
+  coal: {require: {wood_pickaxe: 1}, receive: {coal: 1}, leaves: path}
+  iron: {require: {stone_pickaxe: 1}, receive: {iron: 1}, leaves: path}
+  diamond: {require: {iron_pickaxe: 1}, receive: {diamond: 1}, leaves: path}
+
+place:
+  stone: {uses: {stone: 1}, where: [grass, sand, path, water, lava]}
+  table: {uses: {wood: 1}, where: [grass, sand, path]}
+  furnace: {uses: {stone: 1}, where: [grass, sand, path]}
+
+make:
+  wood_pickaxe: {uses: {wood: 1}, nearby: [table]}
+  stone_pickaxe: {uses: {wood: 1, stone: 1}, nearby: [table]}
+  iron_pickaxe: {uses: {wood: 1, coal: 1, iron: 1}, nearby: [table, furnace]}
+
+textures:
+  water: assets/water.png
+  grass: assets/grass.png
+  stone: assets/stone.png
+  path: assets/path.png
+  sand: assets/sand.png
+  tree: assets/tree.png
+  coal: assets/coal.png
+  iron: assets/iron.png
+  diamond: assets/diamond.png
+  lava: assets/lava.png
+  table: assets/table.png
+  furnace: assets/furnace.png
+  player-left: assets/player-left.png
+  player-right: assets/player-right.png
+  player-up: assets/player-up.png
+  player-down: assets/player-down.png
+  cow: assets/cow.png
+  zombie: assets/zombie.png

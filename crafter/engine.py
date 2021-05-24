@@ -11,6 +11,11 @@ BoxSpace = collections.namedtuple('BoxSpace', 'low, high, shape, dtype')
 DictSpace = collections.namedtuple('DictSpace', 'spaces')
 
 
+class AttrDict(dict):
+
+  __getattr__ = dict.__getitem__
+
+
 class Terrain:
 
   def __init__(self, materials, area):
@@ -38,6 +43,8 @@ class Terrain:
     self._map[pos] = self._ids[material]
 
   def __getitem__(self, pos):
+    if not _inside((0, 0), pos, self.area):
+      return None
     return self._names[self._map[tuple(pos)]]
 
 
@@ -98,16 +105,6 @@ class Textures:
 
   def __getitem__(self, name):
     return self._textures[name]
-
-
-class Actions:
-
-  pass
-
-
-class Recipes:
-
-  pass
 
 
 class GlobalView:
