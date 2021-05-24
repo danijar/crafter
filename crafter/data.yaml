@@ -57,3 +57,18 @@ make:
   wood_pickaxe: {uses: {wood: 1}, nearby: [table]}
   stone_pickaxe: {uses: {wood: 1, stone: 1}, nearby: [table]}
   iron_pickaxe: {uses: {wood: 1, coal: 1, iron: 1}, nearby: [table, furnace]}
+
+achievements:
+  - collect_coal
+  - collect_diamond
+  - collect_iron
+  - collect_stone
+  - collect_tree
+  - defeat_zombie
+  - find_food
+  - make_iron_pickaxe
+  - make_stone_pickaxe
+  - make_wood_pickaxe
+  - place_furnace
+  - place_stone
+  - place_table

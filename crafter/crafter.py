@@ -33,7 +33,7 @@ class Env:
     self._step = None
     self._player = None
     self._last_health = None
-    self._last_achivements = None
+    self._unlocked = None
 
   @property
   def observation_space(self):
@@ -56,7 +56,7 @@ class Env:
     self._player = objects.Player(center, self._health)
     self._objs.add(self._player)
     self._last_health = self._health
-    self._last_achivements = self._player.achievements.copy()
+    self._unlocked = set()
     worldgen.generate_world(
         self._terrain, self._objs, center,
         seed=hash((self._seed, self._episode)))
@@ -68,8 +68,11 @@ class Env:
       obj.update(self._terrain, self._objs, self._player, action)
     obs = self._obs()
     reward = 0.0
-    if len(self._player.achievements) > len(self._last_achivements):
-      self._last_achivements = self._player.achievements.copy()
+    unlocked = {
+        name for name, count in self._player.achievements.items()
+        if count > 0 and name not in self._unlocked}
+    if unlocked:
+      self._unlocked |= unlocked
       reward += 1.0
     if self._player.health < self._last_health:
       self._last_health = self._player.health
@@ -82,8 +85,8 @@ class Env:
     done = dead or over
     info = {
         'health': _uint8(self._player.health),
-        'inventory': {k: _uint8(v) for k, v in self._player.inventory.items()},
-        'achievements': self._last_achivements.copy(),
+        'inventory': _uint8(self._player.inventory),
+        'achievements': _uint8(self._player.achievements),
         'discount': 1 - float(dead),
     }
     return obs, reward, done, info
@@ -105,4 +108,6 @@ class Env:
 
 
 def _uint8(value):
+  if isinstance(value, dict):
+    return {k: _uint8(v) for k, v in value.items()}
   return np.array(max(0, min(value, 255)), dtype=np.uint8)

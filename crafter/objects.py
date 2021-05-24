@@ -10,7 +10,7 @@ class Player:
     self.face = (0, 1)
     self.health = health
     self.inventory = {item: 0 for item in constants.items}
-    self.achievements = set()
+    self.achievements = {name: 0 for name in constants.achievements}
     self._max_health = health
     self._hunger = 0
 
@@ -61,13 +61,13 @@ class Player:
     if isinstance(obj, Zombie):
       obj.health -= 1
       if obj.health <= 0:
-        self.achievements.add('defeat_zombie')
+        self.achievements['defeat_zombie'] += 1
     if isinstance(obj, Cow):
       obj.health -= 1
       if obj.health <= 0:
         self.health = min(self.health + 1, self._max_health)
         self._hunger = 0
-        self.achievements.add('find_food')
+        self.achievements['find_food'] += 1
 
   def _collect(self, terrain, target, material):
     info = constants.collect.get(material)
@@ -79,7 +79,7 @@ class Player:
     terrain[target] = info['leaves']
     for name, amount in info['receive'].items():
       self.inventory[name] += 1
-    self.achievements.add(f'collect_{material}')
+    self.achievements[f'collect_{material}'] += 1
 
   def _place(self, name, terrain, target, material):
     info = constants.place[name]
@@ -90,7 +90,7 @@ class Player:
     for item, amount in info['uses'].items():
       self.inventory[item] -= amount
     terrain[target] = name
-    self.achievements.add(f'place_{name}')
+    self.achievements[f'place_{name}'] += 1
 
   def _make(self, name, nearby):
     info = constants.make[name]
@@ -101,7 +101,7 @@ class Player:
     for item, amount in info['uses'].items():
       self.inventory[item] -= amount
     self.inventory[name] += 1
-    self.achievements.add(f'make_{name}')
+    self.achievements[f'make_{name}'] += 1
 
 
 class Cow:

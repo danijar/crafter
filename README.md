@@ -104,7 +104,7 @@ achievements are as follows:
 
 - `find_food`
 - `defeat_zombie`
-- `collect_wood`
+- `collect_tree`
 - `place_table`
 - `make_wood_pickaxe`
 - `collect_stone`
@@ -115,9 +115,6 @@ achievements are as follows:
 - `place_furnace`
 - `make_iron_pickaxe`
 - `collect_diamond`
-
-The set of unlocked achievements can also be accessed via the `info`
-dictionary.
 
 The sum of rewards per episode can range from -0.5 (losing all health without
 any achivement) to 13 (unlocking all achievements and keeping or restoring all
@@ -130,21 +127,8 @@ also end when reaching a time limit, which is 10000 steps by default.
 
 ### Observation Space
 
-Each observation is a dictionary that contains a local image centered at the
-agent and counters for player health and inventory. The following keys are
-available:
-
-| Key | Space |
-| :-- | :---- |
-| `image` | `Box(0, 255, (64, 64, 3), np.uint8)` |
-| `health` | `Box(0, 255, (), np.uint8)` |
-| `wood` | `Box(0, 255, (), np.uint8)` |
-| `stone` | `Box(0, 255, (), np.uint8)` |
-| `iron` | `Box(0, 255, (), np.uint8)` |
-| `diamond` | `Box(0, 255, (), np.uint8)` |
-| `wood_pickaxe` | `Box(0, 255, (), np.uint8)` |
-| `stone_pickaxe` | `Box(0, 255, (), np.uint8)` |
-| `iron_pickaxe` | `Box(0, 255, (), np.uint8)` |
+Each observation is an RGB image that shows a local view of the world around
+the player, as well as the health counter and inventory state of the agent.
 
 ### Action Space
 
@@ -165,6 +149,19 @@ one of the 12 possible actions:
 | 9 | `make_wood_pickaxe` | Nearby table. Wood in inventory. |
 | 10 | `make_stone_pickaxe` | Nearby table. Wood, stone in inventory. |
 | 11 | `make_iron_pickaxe` | Nearby table, furnace. Wood, coal, iron an inventory. |
+
+### Info Dictionary
+
+The step function returns an `info` directionary with additional information
+about the environment state. It can be used for evaluation and debugging but
+should not be provided to the agent. The following entries are available:
+
+| Key | Type | Description |
+| :-- | :--: | :---------- |
+| `health` | uint8 | Health counter of the player. |
+| `inventory` | dict | Mapping from item names to inventory counts. |
+| `achievements` | dict | Mapping from achievement names to their counts. |
+| `discount` | float | 1 during the episode and 0 at the last step. |
 
 ## Baselines
 

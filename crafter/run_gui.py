@@ -75,12 +75,14 @@ def main():
 
     messages = []
     obs, reward, done, _ = env.step(env.action_names.index(action))
-    if len(env._player.achievements) > len(achievements):
-      for name in env._player.achievements:
-        if name not in achievements:
-          count = len(env._player.achievements)
-          messages.append(f'Achievement ({count}/13): {name}')
-      achievements = env._player.achievements.copy()
+
+    unlocked = {
+        name for name, count in env._player.achievements.items()
+        if count > 0 and name not in achievements}
+    for name in unlocked:
+      achievements |= unlocked
+      total = len(env._player.achievements.keys())
+      messages.append(f'Achievement ({len(achievements)}/{total}): {name}')
     if env._step > 0 and env._step % 100 == 0:
       messages.append(f'Time step: {env._step}')
     if reward:
