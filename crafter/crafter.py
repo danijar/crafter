@@ -1,10 +1,7 @@
-import collections
-import pathlib
-
-import imageio
 import numpy as np
 import opensimplex
-from PIL import Image
+
+from . import engine
 
 
 TEXTURES = {
@@ -28,69 +25,12 @@ TEXTURES = {
     'zombie': 'assets/zombie.png',
 }
 
-MATERIAL_NAMES = {
-    1: 'water',
-    2: 'grass',
-    3: 'stone',
-    4: 'path',
-    5: 'sand',
-    6: 'tree',
-    7: 'lava',
-    8: 'coal',
-    9: 'iron',
-    10: 'diamond',
-    11: 'table',
-    12: 'furnace',
-}
+MATERIALS = [
+    'water', 'grass', 'stone', 'path', 'sand', 'tree', 'lava', 'coal', 'iron',
+    'diamond', 'table', 'furnace',
+]
 
-MATERIAL_IDS = {
-    name: id_ for id_, name in MATERIAL_NAMES.items()
-}
-
-WALKABLE = {
-    MATERIAL_IDS['grass'],
-    MATERIAL_IDS['path'],
-    MATERIAL_IDS['sand'],
-}
-
-
-DiscreteSpace = collections.namedtuple('DiscreteSpace', 'n')
-BoxSpace = collections.namedtuple('BoxSpace', 'low, high, shape, dtype')
-DictSpace = collections.namedtuple('DictSpace', 'spaces')
-
-
-class Objects:
-
-  def __init__(self, area):
-    self._map = np.zeros(area, np.uint32)
-    self._objects = [None]
-
-  def __iter__(self):
-    yield from (obj for obj in self._objects if obj)
-
-  def add(self, obj):
-    assert hasattr(obj, 'pos')
-    assert self.free(obj.pos)
-    self._map[obj.pos] = len(self._objects)
-    self._objects.append(obj)
-
-  def remove(self, obj):
-    self._objects[self._map[obj.pos]] = None
-    self._map[obj.pos] = 0
-
-  def move(self, obj, pos):
-    assert self.free(pos)
-    self._map[pos] = self._map[obj.pos]
-    self._map[obj.pos] = 0
-    obj.pos = pos
-
-  def free(self, pos):
-    return self.at(pos) is None
-
-  def at(self, pos):
-    if not (0 <= pos[0] < self._map.shape[0]): return False
-    if not (0 <= pos[1] < self._map.shape[1]): return False
-    return self._objects[self._map[pos]]
+WALKABLE = ['grass', 'path', 'sand']
 
 
 class Player:
@@ -130,21 +70,20 @@ class Player:
       target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
       if _is_free(target, terrain, objects):
         objects.move(self, target)
-      elif _is_free(target, terrain, objects, [MATERIAL_IDS['lava']]):
+      elif _is_free(target, terrain, objects, ['lava']):
         objects.move(self, target)
         self.health = 0
       return
     target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
-    area = terrain.shape
+    area = terrain.area
     if (0 <= target[0] < area[0]) and (0 <= target[1] < area[1]):
       material = terrain[target]
-      material_name = MATERIAL_NAMES[material]
     else:
       material = -1
-      material_name = 'out_of_bounds'
-    empty = material_name in ('grass', 'sand', 'path')
-    water = material_name in ('water',)
-    lava = material_name in ('lava',)
+      material = 'out_of_bounds'
+    empty = material in ('grass', 'sand', 'path')
+    water = material in ('water',)
+    lava = material in ('lava',)
     if action == 5:  # grab or attack
       obj = objects.at(target)
       if obj:
@@ -163,50 +102,48 @@ class Player:
           1 if self.inventory['wood_pickaxe'] else 0,
           2 if self.inventory['stone_pickaxe'] else 0,
           3 if self.inventory['iron_pickaxe'] else 0)
-      if material == MATERIAL_IDS['tree']:
-        terrain[target] = MATERIAL_IDS['grass']
+      if material == 'tree':
+        terrain[target] = 'grass'
         self.inventory['wood'] += 1
         self.achievements.add('collect_wood')
-      elif material == MATERIAL_IDS['stone'] and pickaxe > 0:
-        terrain[target] = MATERIAL_IDS['path']
+      elif material == 'stone' and pickaxe > 0:
+        terrain[target] = 'path'
         self.inventory['stone'] += 1
         self.achievements.add('collect_stone')
-      elif material == MATERIAL_IDS['coal'] and pickaxe > 0:
-        terrain[target] = MATERIAL_IDS['path']
+      elif material == 'coal' and pickaxe > 0:
+        terrain[target] = 'path'
         self.inventory['coal'] += 1
         self.achievements.add('collect_coal')
-      elif material == MATERIAL_IDS['iron'] and pickaxe > 1:
-        terrain[target] = MATERIAL_IDS['path']
+      elif material == 'iron' and pickaxe > 1:
+        terrain[target] = 'path'
         self.inventory['iron'] += 1
         self.achievements.add('collect_iron')
-      elif material == MATERIAL_IDS['diamond'] and pickaxe > 2:
-        terrain[target] = MATERIAL_IDS['path']
+      elif material == 'diamond' and pickaxe > 2:
+        terrain[target] = 'path'
         self.inventory['diamond'] += 1
         self.achievements.add('collect_diamond')
       return
     if action == 6:  # place stone
       if self.inventory['stone'] > 0 and (empty or water or lava):
-        terrain[target] = MATERIAL_IDS['stone']
+        terrain[target] = 'stone'
         self.inventory['stone'] -= 1
         self.achievements.add('place_stone')
       return
     if action == 7:  # place table
       if self.inventory['wood'] > 0 and empty:
-        terrain[target] = MATERIAL_IDS['table']
+        terrain[target] = 'table'
         self.inventory['wood'] -= 1
         self.achievements.add('place_table')
       return
     if action == 8:  # place furnace
       if self.inventory['stone'] > 0 and empty:
-        terrain[target] = MATERIAL_IDS['furnace']
+        terrain[target] = 'furnace'
         self.inventory['stone'] -= 1
         self.achievements.add('place_furnace')
       return
-    nearby = terrain[
-        self.pos[0] - 2: self.pos[0] + 2,
-        self.pos[1] - 2: self.pos[1] + 2]
-    table = (nearby == MATERIAL_IDS['table']).any()
-    furnace = (nearby == MATERIAL_IDS['furnace']).any()
+    nearby = terrain.nearby(self.pos, 2)
+    table = ('table' in nearby)
+    furnace = ('furnace' in nearby)
     if action == 9:  # make wood pickaxe
       if self.inventory['wood'] > 0 and table:
         self.inventory['wood'] -= 1
@@ -299,23 +236,26 @@ class Zombie:
 class Env:
 
   def __init__(
-      self, area=(64, 64), view=4, size=64, length=10000, health=5,
+      self, area=(64, 64), view=(4, 4), size=(64, 64), length=10000, health=5,
       seed=None):
+    view = np.array(view if hasattr(view, '__len__') else (view, view))
+    size = np.array(size if hasattr(size, '__len__') else (size, size))
     self._area = area
-    self._view = view
     self._size = size
     self._length = length
     self._health = health
     self._seed = seed
     self._episode = 0
-    self._grid = self._size // (2 * self._view + 1)
-    self._textures = self._load_textures()
-    self._terrain = np.zeros(area, np.uint8)
-    self._border = (size - self._grid * (2 * self._view + 1)) // 2
+    self._grid = size // (2 * view + 1)
+    self._border = (size - self._grid * (2 * view + 1)) // 2
+    self._textures = engine.Textures(TEXTURES, self._grid)
+    self._terrain = engine.Terrain(MATERIALS, area)
+    self._objects = engine.Objects(area)
+    self._view = engine.LocalView(
+        self._terrain, self._objects, self._textures, self._grid, view)
     self._step = None
     self._random = None
     self._player = None
-    self._objects = None
     self._simplex = None
     self._achievements = None
     self._last_health = None
@@ -323,15 +263,15 @@ class Env:
   @property
   def observation_space(self):
     shape = (self._size, self._size, 3)
-    spaces = {'image': BoxSpace(0, 255, shape, np.uint8)}
+    spaces = {'image': engine.BoxSpace(0, 255, shape, np.uint8)}
     inventory = Player((0, 0), self._health).inventory
     for key in list(inventory.keys()) + ['health']:
-      spaces[key] = BoxSpace(0, 255, (), np.uint8)
-    return DictSpace(spaces)
+      spaces[key] = engine.BoxSpace(0, 255, (), np.uint8)
+    return engine.DictSpace(spaces)
 
   @property
   def action_space(self):
-    return DiscreteSpace(12)
+    return engine.DiscreteSpace(12)
 
   @property
   def action_names(self):
@@ -354,7 +294,8 @@ class Env:
   def reset(self):
     self._step = 0
     self._episode += 1
-    self._terrain[:] = 0
+    self._terrain.reset()
+    self._objects.reset()
     center = self._area[0] // 2, self._area[1] // 2
     self._simplex = opensimplex.OpenSimplex(
         seed=hash((self._seed, self._episode)))
@@ -362,7 +303,6 @@ class Env:
         seed=np.uint32(hash((self._seed, self._episode))))
     simplex = self._noise
     uniform = self._random.uniform
-
     for x in range(self._area[0]):
       for y in range(self._area[1]):
         start = 4 - np.sqrt((x - center[0]) ** 2 + (y - center[1]) ** 2)
@@ -373,49 +313,46 @@ class Env:
         mountain = simplex(x, y, 0, {15: 1, 5: 0.3})
         mountain -= 4 * start + 0.3 * water
         if start > 0.5:
-          self._terrain[x, y] = MATERIAL_IDS['grass']
+          self._terrain[x, y] = 'grass'
         elif mountain > 0.15:
           if (simplex(x, y, 6, 7) > 0.15 and mountain > 0.3):  # cave
-            self._terrain[x, y] = MATERIAL_IDS['path']
+            self._terrain[x, y] = 'path'
           elif simplex(2 * x, y / 5, 7, 3) > 0.4:  # horizonal tunnle
-            self._terrain[x, y] = MATERIAL_IDS['path']
+            self._terrain[x, y] = 'path'
           elif simplex(x / 5, 2 * y, 7, 3) > 0.4:  # vertical tunnle
-            self._terrain[x, y] = MATERIAL_IDS['path']
+            self._terrain[x, y] = 'path'
           elif simplex(x, y, 1, 8) > 0 and uniform() > 0.85:
-            self._terrain[x, y] = MATERIAL_IDS['coal']
+            self._terrain[x, y] = 'coal'
           elif simplex(x, y, 2, 6) > 0.4 and uniform() > 0.75:
-            self._terrain[x, y] = MATERIAL_IDS['iron']
+            self._terrain[x, y] = 'iron'
           elif mountain > 0.18 and uniform() > 0.995:
-            self._terrain[x, y] = MATERIAL_IDS['diamond']
+            self._terrain[x, y] = 'diamond'
           elif mountain > 0.3 and simplex(x, y, 6, 5) > 0.4:
-            self._terrain[x, y] = MATERIAL_IDS['lava']
+            self._terrain[x, y] = 'lava'
           else:
-            self._terrain[x, y] = MATERIAL_IDS['stone']
+            self._terrain[x, y] = 'stone'
         elif 0.25 < water <= 0.35 and simplex(x, y, 4, 9) > -0.2:
-          self._terrain[x, y] = MATERIAL_IDS['sand']
+          self._terrain[x, y] = 'sand'
         elif 0.3 < water:
-          self._terrain[x, y] = MATERIAL_IDS['water']
+          self._terrain[x, y] = 'water'
         else:  # grassland
           if simplex(x, y, 5, 7) > 0 and uniform() > 0.8:
-            self._terrain[x, y] = MATERIAL_IDS['tree']
+            self._terrain[x, y] = 'tree'
           else:
-            self._terrain[x, y] = MATERIAL_IDS['grass']
-
+            self._terrain[x, y] = 'grass'
     self._player = Player(center, self._health)
     self._last_health = self._health
     self._achievements = self._player.achievements.copy()
-    self._objects = Objects(self._area)
     self._objects.add(self._player)
     for x in range(self._area[0]):
       for y in range(self._area[1]):
         dist = np.sqrt((x - center[0]) ** 2 + (y - center[1]) ** 2)
         if self._terrain[x, y] in WALKABLE:
-          grass = self._terrain[x, y] == MATERIAL_IDS['grass']
+          grass = (self._terrain[x, y] == 'grass')
           if dist > 3 and grass and uniform() > 0.98:
             self._objects.add(Cow((x, y), self._random))
           elif dist > 6 and uniform() > 0.993:
             self._objects.add(Zombie((x, y), self._random))
-
     return self._obs()
 
   def step(self, action):
@@ -443,62 +380,28 @@ class Env:
     return obs, reward, done, info
 
   def render(self):
-    canvas = np.zeros((self._size, self._size, 3), np.uint8) + 127
-    for i in range(2 * self._view + 2):
-      for j in range(2 * self._view + 2):
-        x = self._player.pos[0] + i - self._view
-        y = self._player.pos[1] + j - self._view
-        if not (0 <= x < self._area[0] and 0 <= y < self._area[1]):
-          continue
-        texture = self._textures[MATERIAL_NAMES[self._terrain[x, y]]]
-        self._draw(canvas, (x, y), texture)
-    for obj in self._objects:
-      texture = self._textures[obj.texture]
-      self._draw(canvas, obj.pos, texture)
-    return canvas.transpose((1, 0, 2))
+    canvas = np.zeros(tuple(self._size) + (3,), np.uint8) + 127
+    image = self._view(self._player)
+    (x, y), (w, h) = self._border, image.shape[:2]
+    canvas[x: x + w, y: y + h] = image
+    return canvas
 
   def _obs(self):
     obs = {'image': self.render()}
     obs['health'] = _uint8(self._player.health)
     obs.update({k: _uint8(v) for k, v in self._player.inventory.items()})
-    # for key, value in self._player.inventory.items():
-    #   obs[key] = np.clip(value, 0, 255).astype(np.uint8)
     return obs
-
-  def _draw(self, canvas, pos, texture):
-    # TODO: This function is slow.
-    x = self._grid * (pos[0] + self._view - self._player.pos[0]) + self._border
-    y = self._grid * (pos[1] + self._view - self._player.pos[1]) + self._border
-    w, h = texture.shape[:2]
-    if not (0 <= x and x + w <= canvas.shape[0]): return
-    if not (0 <= y and y + h <= canvas.shape[1]): return
-    if texture.shape[-1] == 4:
-      alpha = texture[..., 3:].astype(np.float32) / 255
-      texture = texture[..., :3].astype(np.float32) / 255
-      current = canvas[x: x + w, y: y + h].astype(np.float32) / 255
-      blended = alpha * texture + (1 - alpha) * current
-      result = (255 * blended).astype(np.uint8)
-    else:
-      result = texture
-    canvas[x: x + w, y: y + h] = result
-
-  def _load_textures(self):
-    textures = {}
-    for name, filename in TEXTURES.items():
-      filename = pathlib.Path(__file__).parent / filename
-      image = imageio.imread(filename)
-      image = image.transpose((1, 0) + tuple(range(2, len(image.shape))))
-      image = np.array(Image.fromarray(image).resize(
-          (self._grid, self._grid), resample=Image.NEAREST))
-      textures[name] = image
-    return textures
 
 
 def _is_free(pos, terrain, objects, valid=WALKABLE):
-  if not (0 <= pos[0] < terrain.shape[0]): return False
-  if not (0 <= pos[1] < terrain.shape[1]): return False
-  if terrain[pos] not in valid: return False
-  if not objects.free(pos): return False
+  if not (0 <= pos[0] < terrain.area[0]):
+    return False
+  if not (0 <= pos[1] < terrain.area[1]):
+    return False
+  if terrain[pos] not in valid:
+    return False
+  if not objects.free(pos):
+    return False
   return True
 
 
@@ -510,5 +413,4 @@ def _random_direction(random):
 
 
 def _uint8(value):
-  # return np.clip(value, 0, 255).astype(np.uint8)
   return np.array(max(0, min(value, 255)), dtype=np.uint8)

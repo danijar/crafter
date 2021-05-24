@@ -21,7 +21,7 @@ def main():
   images = []
   for index in range(args.amount):
     images.append(env.reset()['image'])
-    diamonds = (env._terrain == crafter.crafter.MATERIAL_IDS['diamond']).sum()
+    diamonds = env._terrain.count('diamond')
     print(f'Map: {index:>2}, diamonds: {diamonds:>2}')
 
   rows = len(images) // args.cols

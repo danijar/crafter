@@ -49,7 +49,7 @@ def main():
   if args.record:
     frames = []
 
-  diamond = crafter.crafter.MATERIAL_IDS['diamond']
+  diamond = env._terrain.count('diamond')
   print('Diamonds exist:', (env._terrain == diamond).sum())
 
   pygame.init()
