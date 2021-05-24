@@ -100,7 +100,7 @@ class Textures:
       image = imageio.imread(filename)
       image = image.transpose((1, 0) + tuple(range(2, len(image.shape))))
       image = np.array(Image.fromarray(image).resize(
-          size, resample=Image.NEAREST))
+          size[::-1], resample=Image.NEAREST))
       self._textures[name] = image
 
   def __getitem__(self, name):
@@ -140,7 +140,7 @@ class LocalView:
         continue
       texture = self._textures[obj.texture]
       self._draw_alpha(canvas, pos * self._grid, texture)
-    return canvas.transpose((1, 0, 2))
+    return canvas
 
   def _draw(self, canvas, pos, texture):
     (x, y), (w, h) = pos, self._grid

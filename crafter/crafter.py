@@ -322,7 +322,7 @@ class Env:
     image = self._view(self._player)
     (x, y), (w, h) = self._border, image.shape[:2]
     canvas[x: x + w, y: y + h] = image
-    return canvas
+    return canvas.transpose((1, 0, 2))
 
   def _obs(self):
     obs = {'image': self.render()}
