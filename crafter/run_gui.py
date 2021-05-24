@@ -42,15 +42,13 @@ def main():
   env = crafter.Env(
       args.area, args.view, args.window, args.length, args.health, args.seed)
   env.reset()
-  inventory = None
-  health = None
   achievements = set()
   return_ = 0
+  was_done = False
   if args.record:
     frames = []
 
-  diamond = env._terrain.count('diamond')
-  print('Diamonds exist:', (env._terrain == diamond).sum())
+  print('Diamonds exist:', env._terrain.count('diamond'))
 
   pygame.init()
   screen = pygame.display.set_mode(args.window)
@@ -85,20 +83,14 @@ def main():
       achievements = env._player.achievements.copy()
     if env._step > 0 and env._step % 100 == 0:
       messages.append(f'Time step: {env._step}')
-    if not health or health != env._player.health:
-      health = env._player.health
-      messages.append(f'Health: {health}/{args.health}')
     if reward:
       messages.append(f'Reward: {reward}')
       return_ += reward
-    if done:
-      messages.append(f'Episode end: {done}')
-    if not inventory or inventory != env._player.inventory:
-      inventory = env._player.inventory.copy()
-      content = ', '.join(f'{v} {k}' for k, v in inventory.items())
-      messages.append(f'Inventory: {content}')
+    if done and not was_done:
+      was_done = True
+      messages.append('Episode done')
     if messages:
-      print('\n', '\n'.join(messages), sep='')
+      print('\n'.join(messages), sep='')
 
     if args.record:
       frames.append(obs['image'])
