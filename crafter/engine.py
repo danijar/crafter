@@ -167,11 +167,22 @@ class ItemView:
     for index, (item, amount) in enumerate(inventory.items()):
       if amount < 1:
         continue
-      pos = index % self._grid[0], index // self._grid[0]
-      pos = (pos * self._unit + 0.1 * self._unit).astype(np.int32)
-      texture = self._textures.get(item, 0.8 * self._unit)
-      _draw_alpha(canvas, pos, texture)
+      self._item(canvas, index, item)
+      self._amount(canvas, index, amount)
     return canvas
+
+  def _item(self, canvas, index, item):
+    pos = index % self._grid[0], index // self._grid[0]
+    pos = (pos * self._unit + 0.1 * self._unit).astype(np.int32)
+    texture = self._textures.get(item, 0.8 * self._unit)
+    _draw_alpha(canvas, pos, texture)
+
+  def _amount(self, canvas, index, amount):
+    pos = index % self._grid[0], index // self._grid[0]
+    pos = (pos * self._unit + 0.5 * self._unit).astype(np.int32)
+    text = str(amount) if amount in (1, 2, 3, 4, 5) else 'unknown'
+    texture = self._textures.get(text, 0.5 * self._unit)
+    _draw_alpha(canvas, pos, texture)
 
 
 def _inside(lhs, mid, rhs):
