@@ -1,9 +1,9 @@
 import numpy as np
 
-from . import engine
-from . import worldgen
-from . import objects
 from . import constants
+from . import engine
+from . import objects
+from . import worldgen
 
 
 class Env:

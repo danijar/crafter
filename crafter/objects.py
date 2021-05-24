@@ -56,7 +56,6 @@ class Player:
     elif _is_free(target, terrain, objs, ['lava']):
       objs.move(self, target)
       self.health = 0
-    return
 
   def _interact(self, obj):
     if isinstance(obj, Zombie):
