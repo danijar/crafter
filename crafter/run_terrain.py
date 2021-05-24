@@ -16,8 +16,7 @@ def main():
   parser.add_argument('--filename', type=str, default='terrain.png')
   args = parser.parse_args()
 
-  view = max(args.area) // 2 - 1
-  env = crafter.Env(args.area, view, args.size, seed=args.seed)
+  env = crafter.Env(args.area, args.area, args.size, seed=args.seed)
   images = []
   for index in range(args.amount):
     images.append(env.reset()['image'])

@@ -68,6 +68,10 @@ class Player:
       obj.health -= damage
       if obj.health <= 0:
         self.achievements['defeat_zombie'] += 1
+    if isinstance(obj, Skeleton):
+      obj.health -= damage
+      if obj.health <= 0:
+        self.achievements['defeat_skeleton'] += 1
     if isinstance(obj, Cow):
       obj.health -= damage
       if obj.health <= 0:
@@ -144,6 +148,47 @@ class Zombie:
   @property
   def texture(self):
     return 'zombie'
+
+  def update(self, terrain, objs, player, action):
+    if self.health <= 0:
+      objs.remove(self)
+    dist = np.sqrt(
+        (self.pos[0] - player.pos[0]) ** 2 +
+        (self.pos[1] - player.pos[1]) ** 2)
+    if dist <= 1:
+      if self._near and self._random.uniform() > 0.7:
+        player.health -= 1
+      self._near = True
+    else:
+      self._near = False
+    if dist <= 4:
+      xdist = abs(self.pos[0] - player.pos[0])
+      ydist = abs(self.pos[1] - player.pos[1])
+      if self._random.uniform() < 0.2:
+        direction = _random_direction(self._random)
+      elif xdist > ydist and self._random.uniform() < 0.7:
+        direction = (-np.sign(self.pos[0] - player.pos[0]), 0)
+      else:
+        direction = (0, -np.sign(self.pos[1] - player.pos[1]))
+    else:
+      direction = _random_direction(self._random)
+    x = self.pos[0] + direction[0]
+    y = self.pos[1] + direction[1]
+    if _is_free((x, y), terrain, objs, constants.walkable):
+      objs.move(self, (x, y))
+
+
+class Skeleton:
+
+  def __init__(self, pos, random):
+    self.pos = pos
+    self.health = 3
+    self._random = random
+    self._near = False
+
+  @property
+  def texture(self):
+    return 'skeleton'
 
   def update(self, terrain, objs, player, action):
     if self.health <= 0:

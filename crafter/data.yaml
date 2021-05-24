@@ -74,6 +74,7 @@ achievements:
   - collect_stone
   - collect_tree
   - defeat_zombie
+  - defeat_skeleton
   - find_food
   - make_iron_pickaxe
   - make_stone_pickaxe

@@ -10,15 +10,16 @@ from . import objects
 def generate_world(terrain, objs, center, seed):
   random = np.random.RandomState(seed=np.uint32(seed))
   simplex = opensimplex.OpenSimplex(seed=seed)
+  tunnels = np.zeros(terrain.area, np.bool)
   for x in range(terrain.area[0]):
     for y in range(terrain.area[1]):
-      _set_terrain(terrain, (x, y), center, random, simplex)
+      _set_terrain(terrain, tunnels, (x, y), center, random, simplex)
   for x in range(terrain.area[0]):
     for y in range(terrain.area[1]):
-      _set_object(terrain, objs, (x, y), center, random)
+      _set_object(terrain, tunnels, objs, (x, y), center, random)
 
 
-def _set_terrain(terrain, pos, center, random, simplex):
+def _set_terrain(terrain, tunnels, pos, center, random, simplex):
   x, y = pos
   simplex = functools.partial(_simplex, simplex)
   uniform = random.uniform
@@ -36,8 +37,10 @@ def _set_terrain(terrain, pos, center, random, simplex):
       terrain[x, y] = 'path'
     elif simplex(2 * x, y / 5, 7, 3) > 0.4:  # horizonal tunnle
       terrain[x, y] = 'path'
+      tunnels[x, y] = True
     elif simplex(x / 5, 2 * y, 7, 3) > 0.4:  # vertical tunnle
       terrain[x, y] = 'path'
+      tunnels[x, y] = True
     elif simplex(x, y, 1, 8) > 0 and uniform() > 0.85:
       terrain[x, y] = 'coal'
     elif simplex(x, y, 2, 6) > 0.4 and uniform() > 0.75:
@@ -59,16 +62,18 @@ def _set_terrain(terrain, pos, center, random, simplex):
       terrain[x, y] = 'grass'
 
 
-def _set_object(terrain, objs, pos, center, random):
+def _set_object(terrain, tunnels, objs, pos, center, random):
   x, y = pos
   uniform = random.uniform
   dist = np.sqrt((x - center[0]) ** 2 + (y - center[1]) ** 2)
-  if terrain[x, y] in constants.walkable:
-    grass = (terrain[x, y] == 'grass')
-    if dist > 3 and grass and uniform() > 0.98:
+  material = terrain[x, y]
+  if material in constants.walkable:
+    if dist > 3 and material == 'grass' and uniform() > 0.98:
       objs.add(objects.Cow((x, y), random))
     elif dist > 6 and uniform() > 0.993:
       objs.add(objects.Zombie((x, y), random))
+    elif material == 'path' and tunnels[x, y] and uniform() > 0.95:
+      objs.add(objects.Skeleton((x, y), random))
 
 
 def _simplex(simplex, x, y, z, sizes, normalize=True):
