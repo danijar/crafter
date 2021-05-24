@@ -63,7 +63,7 @@ def _set_object(terrain, objs, pos, center, random):
   x, y = pos
   uniform = random.uniform
   dist = np.sqrt((x - center[0]) ** 2 + (y - center[1]) ** 2)
-  if terrain[x, y] in constants.data.walkable:
+  if terrain[x, y] in constants.walkable:
     grass = (terrain[x, y] == 'grass')
     if dist > 3 and grass and uniform() > 0.98:
       objs.add(objects.Cow((x, y), random))

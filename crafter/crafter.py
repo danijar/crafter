@@ -21,9 +21,9 @@ class Env:
     self._seed = seed
     self._episode = 0
     self._textures = engine.Textures(constants.root / 'assets')
-    self._terrain = engine.Terrain(constants.data.materials, area)
+    self._terrain = engine.Terrain(constants.materials, area)
     self._objs = engine.Objects(area)
-    item_rows = int(np.ceil(len(constants.data['items']) / view[0]))
+    item_rows = int(np.ceil(len(constants.items) / view[0]))
     self._local_view = engine.LocalView(
         self._terrain, self._objs, self._textures, unit,
         [view[0], view[1] - item_rows])
@@ -41,11 +41,11 @@ class Env:
 
   @property
   def action_space(self):
-    return engine.DiscreteSpace(len(constants.data.actions))
+    return engine.DiscreteSpace(len(constants.actions))
 
   @property
   def action_names(self):
-    return constants.data.actions
+    return constants.actions
 
   def reset(self):
     self._step = 0

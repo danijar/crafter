@@ -9,7 +9,7 @@ class Player:
     self.pos = pos
     self.face = (0, 1)
     self.health = health
-    self.inventory = {item: 0 for item in constants.data['items']}
+    self.inventory = {item: 0 for item in constants.items}
     self.achievements = set()
     self._max_health = health
     self._hunger = 0
@@ -31,7 +31,7 @@ class Player:
     target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
     material = terrain[target] or 'end_of_world'
     obj = objs.at(target)
-    action = constants.data.actions[action]
+    action = constants.actions[action]
     if action == 'noop':
       pass
     elif action.startswith('move_'):
@@ -51,7 +51,7 @@ class Player:
     directions = dict(left=(-1, 0), right=(+1, 0), up=(0, -1), down=(0, +1))
     self.face = directions[direction]
     target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
-    if _is_free(target, terrain, objs, constants.data.walkable):
+    if _is_free(target, terrain, objs, constants.walkable):
       objs.move(self, target)
     elif _is_free(target, terrain, objs, ['lava']):
       objs.move(self, target)
@@ -71,7 +71,7 @@ class Player:
         self.achievements.add('find_food')
 
   def _collect(self, terrain, target, material):
-    info = constants.data.collect.get(material)
+    info = constants.collect.get(material)
     if not info:
       return
     for name, amount in info['require'].items():
@@ -83,7 +83,7 @@ class Player:
     self.achievements.add(f'collect_{material}')
 
   def _place(self, name, terrain, target, material):
-    info = constants.data.place[name]
+    info = constants.place[name]
     if material not in info['where']:
       return
     if any(self.inventory[k] < v for k, v in info['uses'].items()):
@@ -94,7 +94,7 @@ class Player:
     self.achievements.add(f'place_{name}')
 
   def _make(self, name, nearby):
-    info = constants.data.make[name]
+    info = constants.make[name]
     if not all(util in nearby for util in info['nearby']):
       return
     if any(self.inventory[k] < v for k, v in info['uses'].items()):
@@ -124,7 +124,7 @@ class Cow:
     direction = _random_direction(self._random)
     x = self.pos[0] + direction[0]
     y = self.pos[1] + direction[1]
-    if _is_free((x, y), terrain, objs, constants.data.walkable):
+    if _is_free((x, y), terrain, objs, constants.walkable):
       objs.move(self, (x, y))
 
 
@@ -165,7 +165,7 @@ class Zombie:
       direction = _random_direction(self._random)
     x = self.pos[0] + direction[0]
     y = self.pos[1] + direction[1]
-    if _is_free((x, y), terrain, objs, constants.data.walkable):
+    if _is_free((x, y), terrain, objs, constants.walkable):
       objs.move(self, (x, y))
 
 
