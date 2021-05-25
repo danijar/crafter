@@ -1,13 +1,61 @@
 import numpy as np
 
 from . import constants
+from . import engine
 
 
-class Player:
+class Object:
 
-  def __init__(self, pos, health):
-    self.pos = pos
-    self.face = (0, 1)
+  def __init__(self, world, pos):
+    self.world = world
+    self.pos = np.array(pos)
+    self.random = world.random
+    self.health = 0
+
+  @property
+  def texture(self):
+    raise 'unknown'
+
+  @property
+  def walkable(self):
+    return constants.walkable
+
+  def move(self, direction):
+    direction = np.array(direction)
+    target = self.pos + direction
+    if self.is_free(target):
+      self.world.move(self, target)
+
+  def is_free(self, target, materials=None):
+    materials = self.walkable if materials is None else materials
+    material, obj = self.world[target]
+    return obj is None and material in materials
+
+  def distance(self, target):
+    if hasattr(target, 'pos'):
+      target = target.pos
+    return np.abs(target - self.pos).sum()
+
+  def toward(self, target, long_axis=True):
+    if hasattr(target, 'pos'):
+      target = target.pos
+    offset = target - self.pos
+    dists = np.abs(offset)
+    if (dists[0] > dists[1] if long_axis else dists[0] <= dists[1]):
+      return np.array((np.sign(offset[0]), 0))
+    else:
+      return np.array((0, np.sign(offset[1])))
+
+  def random_dir(self):
+    directions = ((-1, 0), (+1, 0), (0, -1), (0, +1))
+    return directions[self.random.randint(0, len(directions))]
+
+
+class Player(Object):
+
+  def __init__(self, world, pos, health):
+    super().__init__(world, pos)
+    self.facing = (0, 1)
     self.health = health
     self.inventory = {item: 0 for item in constants.items}
     self.achievements = {name: 0 for name in constants.achievements}
@@ -21,40 +69,40 @@ class Player:
         (+1, 0): 'player-right',
         (0, -1): 'player-up',
         (0, +1): 'player-down',
-    }[self.face]
+    }[tuple(self.facing)]
 
-  def update(self, terrain, objs, player, action):
+  @property
+  def walkable(self):
+    return constants.walkable + ['lava']
+
+  def update(self, action):
     self._hunger += 1
     if self._hunger > 100:
       self.health -= 1
       self._hunger = 0
-    target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
-    material = terrain[target] or 'end_of_world'
-    obj = objs.at(target)
+    target = (self.pos[0] + self.facing[0], self.pos[1] + self.facing[1])
+    material, obj = self.world[target]
     action = constants.actions[action]
     if action == 'noop':
       pass
     elif action.startswith('move_'):
-      self._move(action[len('move_'):], terrain, objs)
+      self._move(action[len('move_'):])
     elif action == 'do' and obj:
       self._interact(obj)
     elif action == 'do':
-      self._collect(terrain, target, material)
+      self._collect(target, material)
     elif action.startswith('place_'):
-      self._place(action[len('place_'):], terrain, target, material)
+      self._place(action[len('place_'):], target, material)
     elif action.startswith('make_'):
-      self._make(action[len('make_'):], terrain.nearby(self.pos, 2))
+      self._make(action[len('make_'):])
     for item, amount in self.inventory.items():
       self.inventory[item] = max(0, min(amount, 5))
 
-  def _move(self, direction, terrain, objs):
+  def _move(self, direction):
     directions = dict(left=(-1, 0), right=(+1, 0), up=(0, -1), down=(0, +1))
-    self.face = directions[direction]
-    target = (self.pos[0] + self.face[0], self.pos[1] + self.face[1])
-    if _is_free(target, terrain, objs, constants.walkable):
-      objs.move(self, target)
-    elif _is_free(target, terrain, objs, ['lava']):
-      objs.move(self, target)
+    self.facing = directions[direction]
+    self.move(self.facing)
+    if self.world[self.pos][0] == 'lava':
       self.health = 0
 
   def _interact(self, obj):
@@ -79,19 +127,19 @@ class Player:
         self._hunger = 0
         self.achievements['find_food'] += 1
 
-  def _collect(self, terrain, target, material):
+  def _collect(self, target, material):
     info = constants.collect.get(material)
     if not info:
       return
     for name, amount in info['require'].items():
       if self.inventory[name] < amount:
         return
-    terrain[target] = info['leaves']
+    self.world[target] = info['leaves']
     for name, amount in info['receive'].items():
       self.inventory[name] += 1
     self.achievements[f'collect_{material}'] += 1
 
-  def _place(self, name, terrain, target, material):
+  def _place(self, name, target, material):
     info = constants.place[name]
     if material not in info['where']:
       return
@@ -99,10 +147,11 @@ class Player:
       return
     for item, amount in info['uses'].items():
       self.inventory[item] -= amount
-    terrain[target] = name
+    self.world[target] = name
     self.achievements[f'place_{name}'] += 1
 
-  def _make(self, name, nearby):
+  def _make(self, name):
+    nearby = self.world.nearby(self.pos, 2)
     info = constants.make[name]
     if not all(util in nearby for util in info['nearby']):
       return
@@ -114,125 +163,111 @@ class Player:
     self.achievements[f'make_{name}'] += 1
 
 
-class Cow:
+class Cow(Object):
 
-  def __init__(self, pos, random):
-    self.pos = pos
+  def __init__(self, world, pos):
+    super().__init__(world, pos)
     self.health = 3
-    self._random = random
 
   @property
   def texture(self):
     return 'cow'
 
-  def update(self, terrain, objs, player, action):
+  def update(self):
     if self.health <= 0:
-      objs.remove(self)
-    if self._random.uniform() < 0.5:
-      return
-    direction = _random_direction(self._random)
-    x = self.pos[0] + direction[0]
-    y = self.pos[1] + direction[1]
-    if _is_free((x, y), terrain, objs, constants.walkable):
-      objs.move(self, (x, y))
+      self.world.remove(self)
+    if self.random.uniform() < 0.5:
+      self.move(self.random_dir())
 
 
-class Zombie:
+class Zombie(Object):
 
-  def __init__(self, pos, random):
-    self.pos = pos
+  def __init__(self, world, pos, player):
+    super().__init__(world, pos)
+    self.player = player
     self.health = 5
-    self._random = random
-    self._near = False
+    self.near = False
 
   @property
   def texture(self):
     return 'zombie'
 
-  def update(self, terrain, objs, player, action):
+  def update(self):
     if self.health <= 0:
-      objs.remove(self)
-    dist = np.sqrt(
-        (self.pos[0] - player.pos[0]) ** 2 +
-        (self.pos[1] - player.pos[1]) ** 2)
+      self.world.remove(self)
+    dist = self.distance(self.player)
     if dist <= 1:
-      if self._near and self._random.uniform() > 0.7:
-        player.health -= 1
-      self._near = True
+      if not self.near:
+        self.near = True
+      elif self.random.uniform() > 0.7:
+        self.player.health -= 1
     else:
-      self._near = False
-    if dist <= 4:
-      xdist = abs(self.pos[0] - player.pos[0])
-      ydist = abs(self.pos[1] - player.pos[1])
-      if self._random.uniform() < 0.2:
-        direction = _random_direction(self._random)
-      elif xdist > ydist and self._random.uniform() < 0.7:
-        direction = (-np.sign(self.pos[0] - player.pos[0]), 0)
-      else:
-        direction = (0, -np.sign(self.pos[1] - player.pos[1]))
+      self.near = False
+    if dist <= 6 and self.random.uniform() < 0.8:
+      self.move(self.toward(self.player, self.random.uniform() < 0.7))
     else:
-      direction = _random_direction(self._random)
-    x = self.pos[0] + direction[0]
-    y = self.pos[1] + direction[1]
-    if _is_free((x, y), terrain, objs, constants.walkable):
-      objs.move(self, (x, y))
+      self.move(self.random_dir())
 
 
-class Skeleton:
+class Skeleton(Object):
 
-  def __init__(self, pos, random):
-    self.pos = pos
+  def __init__(self, world, pos, player):
+    super().__init__(world, pos)
+    self.player = player
     self.health = 3
-    self._random = random
-    self._near = False
 
   @property
   def texture(self):
     return 'skeleton'
 
-  def update(self, terrain, objs, player, action):
+  def update(self):
     if self.health <= 0:
-      objs.remove(self)
-    dist = np.sqrt(
-        (self.pos[0] - player.pos[0]) ** 2 +
-        (self.pos[1] - player.pos[1]) ** 2)
-    if dist <= 1:
-      if self._near and self._random.uniform() > 0.7:
-        player.health -= 1
-      self._near = True
+      self.world.remove(self)
+    dist = self.distance(self.player.pos)
+    if dist <= 3:
+      self.move(-self.toward(self.player, self.random.uniform() < 0.6))
+    # TODO: Add reload time.
+    elif dist <= 5 and self.random.uniform() < 0.2:
+      self.shoot(self.toward(self.player))
+    elif dist <= 8 and self.random.uniform() < 0.3:
+      self.move(self.toward(self.player, self.random.uniform() < 0.6))
+    elif self.random.uniform() < 0.2:
+      self.move(self.random_dir())
+
+  def shoot(self, direction):
+    if direction[0] == 0 and direction[1] == 0:
+      return
+    pos = self.pos + direction
+    if self.is_free(pos, Arrow.walkable):
+      self.world.add(Arrow(self.world, pos, direction))
+
+
+class Arrow(Object):
+
+  def __init__(self, world, pos, facing):
+    super().__init__(world, pos)
+    self.facing = facing
+
+  @property
+  def texture(self):
+    return {
+        (-1, 0): 'arrow-left',
+        (+1, 0): 'arrow-right',
+        (0, -1): 'arrow-up',
+        (0, +1): 'arrow-down',
+    }[tuple(self.facing)]
+
+  @engine.staticproperty
+  def walkable():
+    return constants.walkable + ['water', 'lava']
+
+  def update(self):
+    target = self.pos + self.facing
+    material, obj = self.world[target]
+    if obj:
+      obj.health -= 1
+      self.world.remove(self)
+    elif material not in self.walkable:
+      self.world.remove(self)
     else:
-      self._near = False
-    if dist <= 4:
-      xdist = abs(self.pos[0] - player.pos[0])
-      ydist = abs(self.pos[1] - player.pos[1])
-      if self._random.uniform() < 0.2:
-        direction = _random_direction(self._random)
-      elif xdist > ydist and self._random.uniform() < 0.7:
-        direction = (-np.sign(self.pos[0] - player.pos[0]), 0)
-      else:
-        direction = (0, -np.sign(self.pos[1] - player.pos[1]))
-    else:
-      direction = _random_direction(self._random)
-    x = self.pos[0] + direction[0]
-    y = self.pos[1] + direction[1]
-    if _is_free((x, y), terrain, objs, constants.walkable):
-      objs.move(self, (x, y))
-
-
-def _is_free(pos, terrain, objs, valid):
-  if not (0 <= pos[0] < terrain.area[0]):
-    return False
-  if not (0 <= pos[1] < terrain.area[1]):
-    return False
-  if terrain[pos] not in valid:
-    return False
-  if not objs.free(pos):
-    return False
-  return True
-
-
-def _random_direction(random):
-  if random.uniform() > 0.5:
-    return (0, random.randint(-1, 2))
-  else:
-    return (random.randint(-1, 2), 0)
+      self.move(self.facing)

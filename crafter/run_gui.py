@@ -51,7 +51,7 @@ def main():
   if args.record:
     frames = []
 
-  print('Diamonds exist:', env._terrain.count('diamond'))
+  print('Diamonds exist:', env._world.count('diamond'))
 
   pygame.init()
   screen = pygame.display.set_mode(args.window)
