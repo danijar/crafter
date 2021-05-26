@@ -59,7 +59,8 @@ class Env:
 
   def step(self, action):
     self._step += 1
-    for obj in self._world.objects:
+    # Copy object list so new added objects are not updated right away.
+    for obj in list(self._world.objects):
       if obj is self._player:
         obj.update(action)
       else:

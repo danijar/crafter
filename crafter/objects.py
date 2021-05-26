@@ -25,6 +25,8 @@ class Object:
     target = self.pos + direction
     if self.is_free(target):
       self.world.move(self, target)
+      return True
+    return False
 
   def is_free(self, target, materials=None):
     materials = self.walkable if materials is None else materials
@@ -215,6 +217,7 @@ class Skeleton(Object):
     super().__init__(world, pos)
     self.player = player
     self.health = 3
+    self.reload = 0
 
   @property
   def texture(self):
@@ -223,23 +226,28 @@ class Skeleton(Object):
   def update(self):
     if self.health <= 0:
       self.world.remove(self)
+    self.reload = max(0, self.reload - 1)
     dist = self.distance(self.player.pos)
     if dist <= 3:
-      self.move(-self.toward(self.player, self.random.uniform() < 0.6))
-    # TODO: Add reload time.
-    elif dist <= 5 and self.random.uniform() < 0.2:
-      self.shoot(self.toward(self.player))
+      moved = self.move(-self.toward(self.player, self.random.uniform() < 0.6))
+      if moved:
+        return
+    if dist <= 5 and self.random.uniform() < 0.5:
+      self._shoot(self.toward(self.player))
     elif dist <= 8 and self.random.uniform() < 0.3:
       self.move(self.toward(self.player, self.random.uniform() < 0.6))
     elif self.random.uniform() < 0.2:
       self.move(self.random_dir())
 
-  def shoot(self, direction):
+  def _shoot(self, direction):
+    if self.reload > 0:
+      return
     if direction[0] == 0 and direction[1] == 0:
       return
     pos = self.pos + direction
     if self.is_free(pos, Arrow.walkable):
       self.world.add(Arrow(self.world, pos, direction))
+      self.reload = 4
 
 
 class Arrow(Object):
