@@ -64,13 +64,6 @@ class Player(Object):
     self._max_health = health
     self._hunger = 0
 
-
-    # TODO
-    self.inventory['wood'] = 4
-    self.inventory['stone'] = 3
-    self.inventory['wood_pickaxe'] = 2
-    self.inventory['stone_pickaxe'] = 1
-
   @property
   def texture(self):
     return {
