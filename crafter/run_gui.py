@@ -46,6 +46,7 @@ def main():
       args.area, args.view, args.window, args.length, args.health, args.seed)
   env.reset()
   achievements = set()
+  duration = 0
   return_ = 0
   was_done = False
   if args.record:
@@ -97,15 +98,18 @@ def main():
     if messages:
       print('\n'.join(messages), sep='')
 
+    duration += 1
     if args.record:
       frames.append(obs['image'])
     surface = pygame.surfarray.make_surface(
         obs['image'].transpose((1, 0, 2)))
+
     screen.blit(surface, (0, 0))
     pygame.display.flip()
     clock.tick(args.fps)
 
   pygame.quit()
+  print('Duration:', duration)
   print('Return:', return_)
   if args.record:
     imageio.mimsave(args.record, frames)
