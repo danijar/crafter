@@ -121,8 +121,8 @@ achievements are as follows:
 - `place_table`
 
 The sum of rewards per episode can range from -0.5 (losing all health without
-any achivements) to 17 (unlocking all achievements and keeping or restoring all
-health).
+any achievements) to 17 (unlocking all achievements and keeping or restoring
+all health).
 
 ### Termination
 

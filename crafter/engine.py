@@ -111,7 +111,7 @@ class Textures:
     self._originals = {}
     self._textures = {}
     for filename in pathlib.Path(directory).glob('*.png'):
-      image = imageio.imread(filename)
+      image = imageio.imread(filename.read_bytes())
       image = image.transpose((1, 0) + tuple(range(2, len(image.shape))))
       self._originals[filename.stem] = image
       self._textures[(filename.stem, image.shape[:2])] = image
@@ -192,9 +192,9 @@ class ItemView:
 
   def _amount(self, canvas, index, amount):
     pos = index % self._grid[0], index // self._grid[0]
-    pos = (pos * self._unit + 0.5 * self._unit).astype(np.int32)
+    pos = (pos * self._unit + 0.4 * self._unit).astype(np.int32)
     text = str(amount) if amount in (1, 2, 3, 4, 5) else 'unknown'
-    texture = self._textures.get(text, 0.5 * self._unit)
+    texture = self._textures.get(text, 0.6 * self._unit)
     _draw_alpha(canvas, pos, texture)
 
 

@@ -83,9 +83,9 @@ class Env:
     over = self._length and self._step >= self._length
     done = dead or over
     info = {
-        'health': _uint8(self._player.health),
-        'inventory': _uint8(self._player.inventory),
-        'achievements': _uint8(self._player.achievements),
+        'health': self._player.health,
+        'inventory': self._player.inventory.copy(),
+        'achievements': self._player.achievements.copy(),
         'discount': 1 - float(dead),
     }
     return obs, reward, done, info
@@ -104,9 +104,3 @@ class Env:
 
   def _obs(self):
     return self.render()
-
-
-def _uint8(value):
-  if isinstance(value, dict):
-    return {k: _uint8(v) for k, v in value.items()}
-  return np.array(max(0, min(value, 255)), dtype=np.uint8)

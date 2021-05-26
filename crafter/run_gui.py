@@ -51,7 +51,6 @@ def main():
   was_done = False
   if args.record:
     frames = []
-
   print('Diamonds exist:', env._world.count('diamond'))
 
   pygame.init()
