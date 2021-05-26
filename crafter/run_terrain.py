@@ -19,7 +19,7 @@ def main():
   env = crafter.Env(args.area, args.area, args.size, seed=args.seed)
   images = []
   for index in range(args.amount):
-    images.append(env.reset()['image'])
+    images.append(env.reset())
     diamonds = env._world.count('diamond')
     print(f'Map: {index:>2}, diamonds: {diamonds:>2}')
 

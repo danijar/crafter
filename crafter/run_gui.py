@@ -100,9 +100,9 @@ def main():
 
     duration += 1
     if args.record:
-      frames.append(obs['image'])
+      frames.append(obs)
     surface = pygame.surfarray.make_surface(
-        obs['image'].transpose((1, 0, 2)))
+        obs.transpose((1, 0, 2)))
 
     screen.blit(surface, (0, 0))
     pygame.display.flip()

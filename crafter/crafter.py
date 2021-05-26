@@ -103,7 +103,7 @@ class Env:
     return canvas.transpose((1, 0, 2))
 
   def _obs(self):
-    return {'image': self.render()}
+    return self.render()
 
 
 def _uint8(value):
