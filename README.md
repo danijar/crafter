@@ -8,15 +8,15 @@ Open world survival environment for reinforcement learning.
 
 ## Highlights
 
-Crafter is a procedurally generated 2D world, where the agent finds food,
-avoids or defends against zombies, and collect materials to build tools, which
-in turn unlock new materials.
+Crafter is a procedurally generated 2D world, where the agent finds food, and
+collect materials to build tools, which in turn unlock new materials, all while
+avoiding or defending against monsters.
 
 - **Generalization:** New procedurally generated map for each episode.
 - **Exploration:** Materials unlock new tools which unlock new materials.
 - **Memory:** Input images show small part of the world centered at the agent.
-- **No trivial behaviors:** Must find food and avoid or defend against zombies.
-- **Easy:** Flat categorical action space with 12 actions.
+- **Nontrivial survival:** Must find food and avoid or defend against zombies.
+- **Easy usage:** Image inputs and flat categorical action space.
 - **Fast:** Runs at 2000 FPS on a simple laptop.
 - **Reproducible:** All randomness is controlled by a seed.
 
@@ -62,7 +62,7 @@ import crafter
 
 env = crafter.Env(seed=0)
 obs = env.reset()
-assert obs['image'].shape == (64, 64, 3)
+assert obs.shape == (64, 64, 3)
 
 done = False
 while not done:
@@ -86,11 +86,11 @@ crafter.Env(area=(64, 64), view=(9, 9), size=(64, 64), length=10000, seed=None)
 
 | Parameter | Default | Description |
 | :-------- | :------ | :---------- |
-| `area` | `(64, 64)` | Size of the world in cells. |
+| `area` | `(64, 64)` | Size of the world in grid cells. |
 | `view` | `(9, 9)` | Layout size in cells; determines view distance. |
-| `size` | `(64, 64)` | Render size of the images. |
+| `size` | `(64, 64)` | Render size of the images in pixels. |
 | `length` | `10000` | Time limit for the episode, can be `None`. |
-| `health` | `10` | Initial health level of the player. |
+| `health` | `5` | Initial health level of the player. |
 | `seed` | None | Interger that determines world generation and creatures. |
 
 ### Reward
@@ -99,25 +99,29 @@ The reward can either be given to the agent or used as a proxy metric for
 evaluating unsupervised agents.
 
 The reward is +1 when the agent unlocks a new achievement, -0.1 when its health
-level decreases, +0.1 when it increases, and 0 for all other time steps. The 13
+level decreases, +0.1 when it increases, and 0 for all other time steps. The
 achievements are as follows:
 
-- `find_food`
-- `defeat_zombie`
-- `collect_tree`
-- `place_table`
-- `make_wood_pickaxe`
-- `collect_stone`
-- `place_stone`
-- `make_stone_pickaxe`
 - `collect_coal`
-- `collect_iron`
-- `place_furnace`
-- `make_iron_pickaxe`
 - `collect_diamond`
+- `collect_iron`
+- `collect_stone`
+- `collect_tree`
+- `defeat_zombie`
+- `defeat_skeleton`
+- `find_food`
+- `make_iron_pickaxe`
+- `make_stone_pickaxe`
+- `make_wood_pickaxe`
+- `make_iron_sword`
+- `make_stone_sword`
+- `make_wood_sword`
+- `place_furnace`
+- `place_stone`
+- `place_table`
 
 The sum of rewards per episode can range from -0.5 (losing all health without
-any achivement) to 13 (unlocking all achievements and keeping or restoring all
+any achivements) to 17 (unlocking all achievements and keeping or restoring all
 health).
 
 ### Termination
@@ -133,7 +137,7 @@ the player, as well as the health counter and inventory state of the agent.
 ### Action Space
 
 The action space is categorical. Each action is an integer index representing
-one of the 12 possible actions:
+one of the possible actions:
 
 | Integer | Name | Requirement |
 | :-----: | :--- | :---------- |
@@ -149,6 +153,9 @@ one of the 12 possible actions:
 | 9 | `make_wood_pickaxe` | Nearby table. Wood in inventory. |
 | 10 | `make_stone_pickaxe` | Nearby table. Wood, stone in inventory. |
 | 11 | `make_iron_pickaxe` | Nearby table, furnace. Wood, coal, iron an inventory. |
+| 12 | `make_wood_sword` | Nearby table. Wood in inventory. |
+| 13 | `make_stone_sword` | Nearby table. Wood, stone in inventory. |
+| 14 | `make_iron_sword` | Nearby table, furnace. Wood, coal, iron an inventory. |
 
 ### Info Dictionary
 
