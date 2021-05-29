@@ -20,6 +20,10 @@ class Object:
   def walkable(self):
     return constants.walkable
 
+  @property
+  def all_dirs(self):
+    return ((-1, 0), (+1, 0), (0, -1), (0, +1))
+
   def move(self, direction):
     direction = np.array(direction)
     target = self.pos + direction
@@ -49,8 +53,7 @@ class Object:
       return np.array((0, np.sign(offset[1])))
 
   def random_dir(self):
-    directions = ((-1, 0), (+1, 0), (0, -1), (0, +1))
-    return directions[self.random.randint(0, len(directions))]
+    return self.all_dirs[self.random.randint(0, 4)]
 
 
 class Player(Object):
@@ -146,7 +149,7 @@ class Player(Object):
     self.achievements[f'collect_{material}'] += 1
 
   def _place(self, name, target, material):
-    if not self.is_free(target):
+    if self.world[target][1]:
       return
     info = constants.place[name]
     if material not in info['where']:
@@ -182,6 +185,7 @@ class Cow(Object):
   def __init__(self, world, pos):
     super().__init__(world, pos)
     self.health = 3
+    # self.fertile = 0
 
   @property
   def texture(self):
@@ -190,8 +194,28 @@ class Cow(Object):
   def update(self):
     if self.health <= 0:
       self.world.remove(self)
+    # self.fertile += 1
     if self.random.uniform() < 0.5:
-      self.move(self.random_dir())
+      direction = self.random_dir()
+      # self._maybe_mate(direction)
+      self.move(direction)
+
+  # def _maybe_mate(self, direction):
+  #   if self.fertile < 100:
+  #     return
+  #   if not isinstance(self.world[self.pos + direction][1], Cow):
+  #     return
+  #   frees = [self.pos + x for x in self.all_dirs if x != direction]
+  #   if any(isinstance(self.world[x][1], Cow) for x in frees):
+  #     return
+  #   frees = [x for x in frees if self.is_free(x)]
+  #   if len(frees) < 2:
+  #     return
+  #   if self.random.uniform() < 0.1:
+  #     self.fertile = 0
+  #     target = frees[self.random.randint(0, len(frees))]
+  #     self.world.add(Cow(self.world, target))
+  #     print('Cows just mated.')
 
 
 class Zombie(Object):
