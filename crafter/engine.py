@@ -193,7 +193,7 @@ class ItemView:
   def _amount(self, canvas, index, amount):
     pos = index % self._grid[0], index // self._grid[0]
     pos = (pos * self._unit + 0.4 * self._unit).astype(np.int32)
-    text = str(amount) if amount in (1, 2, 3, 4, 5) else 'unknown'
+    text = str(amount) if amount in list(range(10)) else 'unknown'
     texture = self._textures.get(text, 0.6 * self._unit)
     _draw_alpha(canvas, pos, texture)
 

@@ -98,7 +98,7 @@ class Player(Object):
     elif action.startswith('make_'):
       self._make(action[len('make_'):])
     for item, amount in self.inventory.items():
-      self.inventory[item] = max(0, min(amount, 5))
+      self.inventory[item] = max(0, min(amount, 9))
 
   def _move(self, direction):
     directions = dict(left=(-1, 0), right=(+1, 0), up=(0, -1), down=(0, +1))
