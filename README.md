@@ -17,8 +17,7 @@ avoiding or defending against monsters.
 - **Memory:** Input images show small part of the world centered at the agent.
 - **Nontrivial survival:** Must find food and avoid or defend against zombies.
 - **Easy usage:** Image inputs and flat categorical action space.
-- **Fast:** Runs at 2000 FPS on a simple laptop.
-- **Reproducible:** All randomness is controlled by a seed.
+- **Reproducible:** All randomness is controlled by a single seed.
 
 ## Play Yourself
 

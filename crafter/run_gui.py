@@ -28,15 +28,17 @@ def main():
       pygame.K_w: 'move_up',
       pygame.K_s: 'move_down',
       pygame.K_SPACE: 'do',
-      pygame.K_1: 'place_stone',
-      pygame.K_2: 'place_table',
-      pygame.K_3: 'place_furnace',
-      pygame.K_4: 'make_wood_pickaxe',
-      pygame.K_5: 'make_stone_pickaxe',
-      pygame.K_6: 'make_iron_pickaxe',
-      pygame.K_7: 'make_wood_sword',
-      pygame.K_8: 'make_stone_sword',
-      pygame.K_9: 'make_iron_sword',
+      pygame.K_y: 'place_stone',
+      pygame.K_u: 'place_table',
+      pygame.K_i: 'place_furnace',
+      pygame.K_o: 'place_fence',
+      pygame.K_1: 'make_fence',
+      pygame.K_2: 'make_wood_pickaxe',
+      pygame.K_3: 'make_stone_pickaxe',
+      pygame.K_4: 'make_iron_pickaxe',
+      pygame.K_5: 'make_wood_sword',
+      pygame.K_6: 'make_stone_sword',
+      pygame.K_7: 'make_iron_sword',
   }
   print('Actions:')
   for key, action in keymap.items():
@@ -100,9 +102,7 @@ def main():
     duration += 1
     if args.record:
       frames.append(obs)
-    surface = pygame.surfarray.make_surface(
-        obs.transpose((1, 0, 2)))
-
+    surface = pygame.surfarray.make_surface(obs.transpose((1, 0, 2)))
     screen.blit(surface, (0, 0))
     pygame.display.flip()
     clock.tick(args.fps)

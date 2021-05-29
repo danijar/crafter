@@ -114,6 +114,10 @@ class Player(Object):
         self.inventory['stone_sword'] and 3,
         self.inventory['iron_sword'] and 5,
     ])
+    if isinstance(obj, Fence):
+      self.world.remove(obj)
+      self.inventory['fence'] += 1
+      self.achievements['collect_fence'] += 1
     if isinstance(obj, Zombie):
       obj.health -= damage
       if obj.health <= 0:
@@ -136,9 +140,9 @@ class Player(Object):
     for name, amount in info['require'].items():
       if self.inventory[name] < amount:
         return
-    self.world[target] = info['leaves']
     for name, amount in info['receive'].items():
-      self.inventory[name] += 1
+      self.inventory[name] += amount
+    self.world[target] = info['leaves']
     self.achievements[f'collect_{material}'] += 1
 
   def _place(self, name, target, material):
@@ -151,7 +155,13 @@ class Player(Object):
       return
     for item, amount in info['uses'].items():
       self.inventory[item] -= amount
-    self.world[target] = name
+    if info['type'] == 'material':
+      self.world[target] = name
+    elif info['type'] == 'object':
+      cls = {
+          'fence': Fence,
+      }[name]
+      self.world.add(cls(self.world, target))
     self.achievements[f'place_{name}'] += 1
 
   def _make(self, name):
@@ -163,7 +173,7 @@ class Player(Object):
       return
     for item, amount in info['uses'].items():
       self.inventory[item] -= amount
-    self.inventory[name] += 1
+    self.inventory[name] += info['gives']
     self.achievements[f'make_{name}'] += 1
 
 
@@ -281,3 +291,16 @@ class Arrow(Object):
       self.world.remove(self)
     else:
       self.move(self.facing)
+
+
+class Fence(Object):
+
+  def __init__(self, world, pos):
+    super().__init__(world, pos)
+
+  @property
+  def texture(self):
+    return 'fence'
+
+  def update(self):
+    pass

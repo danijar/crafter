@@ -62,10 +62,9 @@ class World:
     self._terrain[pos] = self._material_ids[material]
 
   def __getitem__(self, pos):
-    if _inside((0, 0), pos, self.area):
-      material = self._material_names[self._terrain[tuple(pos)]]
-    else:
-      material = None
+    if not _inside((0, 0), pos, self.area):
+      return None, None
+    material = self._material_names[self._terrain[tuple(pos)]]
     if not (0 <= pos[0] < self._coords.shape[0]):
       obj = False
     elif not (0 <= pos[1] < self._coords.shape[1]):

@@ -8,12 +8,14 @@ actions:
   - place_stone
   - place_table
   - place_furnace
+  - place_fence
   - make_wood_pickaxe
   - make_stone_pickaxe
   - make_iron_pickaxe
   - make_wood_sword
   - make_stone_sword
   - make_iron_sword
+  - make_fence
 
 materials:
   - water
@@ -46,6 +48,7 @@ items:
   - wood_sword
   - stone_sword
   - iron_sword
+  - fence
 
 collect:
   tree: {require: {}, receive: {wood: 1}, leaves: grass}
@@ -55,33 +58,38 @@ collect:
   diamond: {require: {iron_pickaxe: 1}, receive: {diamond: 1}, leaves: path}
 
 place:
-  stone: {uses: {stone: 1}, where: [grass, sand, path, water, lava]}
-  table: {uses: {wood: 1}, where: [grass, sand, path]}
-  furnace: {uses: {stone: 1}, where: [grass, sand, path]}
+  stone: {uses: {stone: 1}, where: [grass, sand, path, water, lava], type: material}
+  table: {uses: {wood: 2}, where: [grass, sand, path], type: material}
+  furnace: {uses: {stone: 4}, where: [grass, sand, path], type: material}
+  fence: {uses: {fence: 1}, where: [grass, sand, path], type: object}
 
 make:
-  wood_pickaxe: {uses: {wood: 1}, nearby: [table]}
-  stone_pickaxe: {uses: {wood: 1, stone: 1}, nearby: [table]}
-  iron_pickaxe: {uses: {wood: 1, coal: 1, iron: 1}, nearby: [table, furnace]}
-  wood_sword: {uses: {wood: 1}, nearby: [table]}
-  stone_sword: {uses: {wood: 1, stone: 1}, nearby: [table]}
-  iron_sword: {uses: {wood: 1, coal: 1, iron: 1}, nearby: [table, furnace]}
+  wood_pickaxe: {uses: {wood: 1}, nearby: [table], gives: 1}
+  stone_pickaxe: {uses: {wood: 1, stone: 1}, nearby: [table], gives: 1}
+  iron_pickaxe: {uses: {wood: 1, coal: 1, iron: 1}, nearby: [table, furnace], gives: 1}
+  wood_sword: {uses: {wood: 1}, nearby: [table], gives: 1}
+  stone_sword: {uses: {wood: 1, stone: 1}, nearby: [table], gives: 1}
+  iron_sword: {uses: {wood: 1, coal: 1, iron: 1}, nearby: [table, furnace], gives: 1}
+  fence: {uses: {wood: 1}, nearby: [table], gives: 4}
 
 achievements:
   - collect_coal
   - collect_diamond
+  - collect_fence
   - collect_iron
   - collect_stone
   - collect_tree
-  - defeat_zombie
   - defeat_skeleton
+  - defeat_zombie
   - find_food
+  - make_fence
   - make_iron_pickaxe
-  - make_stone_pickaxe
-  - make_wood_pickaxe
   - make_iron_sword
+  - make_stone_pickaxe
   - make_stone_sword
+  - make_wood_pickaxe
   - make_wood_sword
+  - place_fence
   - place_furnace
   - place_stone
   - place_table
