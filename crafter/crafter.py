@@ -94,7 +94,10 @@ class Env:
     canvas = np.zeros(tuple(self._size) + (3,), np.uint8)
     local_view = self._local_view(self._player)
     item_view = self._item_view({
-        'heart': self._player.health,
+        'health': self._player.health,
+        # 'hunger': self._player.hunger,
+        # 'thirst': self._player.thirst,
+        # 'fatigue': self._player.fatigue,
         **self._player.inventory})
     view = local_view
     view = np.concatenate([local_view, item_view], 1)

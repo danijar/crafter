@@ -65,7 +65,9 @@ class Player(Object):
     self.inventory = {item: 0 for item in constants.items}
     self.achievements = {name: 0 for name in constants.achievements}
     self._max_health = health
-    self._hunger = 0
+    self.hunger = 0
+    self.thirst = 0
+    self.fatigue = 0
 
   @property
   def texture(self):
@@ -81,10 +83,10 @@ class Player(Object):
     return constants.walkable + ['lava']
 
   def update(self, action):
-    self._hunger += 1
-    if self._hunger > 100:
+    self.hunger += 1
+    if self.hunger > 100:
       self.health -= 1
-      self._hunger = 0
+      self.hunger = 0
     target = (self.pos[0] + self.facing[0], self.pos[1] + self.facing[1])
     material, obj = self.world[target]
     action = constants.actions[action]
@@ -133,7 +135,7 @@ class Player(Object):
       obj.health -= damage
       if obj.health <= 0:
         self.health = min(self.health + 1, self._max_health)
-        self._hunger = 0
+        self.hunger = 0
         self.achievements['find_food'] += 1
 
   def _collect(self, target, material):
