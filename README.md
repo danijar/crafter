@@ -6,6 +6,17 @@ Open world survival environment for reinforcement learning.
 
 ![Crafter Terrain](https://github.com/danijar/crafter/raw/main/media/terrain.png)
 
+If you find this code useful, please reference in your paper:
+
+```
+@misc{hafner2021crafter,
+  title = {Crafter: An Open World Survival Benchmark},
+  author = {Danijar Hafner},
+  year = {2021},
+  howpublished = {\url{https://github.com/danijar/crafter}},
+}
+```
+
 ## Highlights
 
 Crafter is a procedurally generated 2D world, where the agent finds food, and
@@ -13,11 +24,11 @@ collect materials to build tools, which in turn unlock new materials, all while
 avoiding or defending against monsters.
 
 - **Generalization:** New procedurally generated map for each episode.
-- **Exploration:** Materials unlock new tools which unlock new materials.
+- **Exploration:** Materials unlock new tools which in turn unlock new materials.
 - **Memory:** Input images show small part of the world centered at the agent.
-- **Nontrivial survival:** Must find food and avoid or defend against zombies.
-- **Easy usage:** Image inputs and flat categorical action space.
+- **Survival:** Must find food and avoid or defend against creatures.
 - **Reproducible:** All randomness is controlled by a single seed.
+- **Easy to use:** Image inputs and flat categorical action space.
 
 ## Play Yourself
 
