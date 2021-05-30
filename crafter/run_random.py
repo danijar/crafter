@@ -19,8 +19,9 @@ def main():
   args = parser.parse_args()
 
   random = np.random.RandomState(args.seed)
-  env = crafter.Env(
-      args.area, args.view, args.size, args.length, args.health, args.seed)
+  crafter.constants.items['health']['max'] = args.health
+  crafter.constants.items['health']['initial'] = args.health
+  env = crafter.Env(args.area, args.view, args.size, args.length, args.seed)
   if args.record:
     frames = []
 

@@ -44,8 +44,9 @@ def main():
   for key, action in keymap.items():
     print(f'  {pygame.key.name(key)}: {action}')
 
-  env = crafter.Env(
-      args.area, args.view, args.window, args.length, args.health, args.seed)
+  crafter.constants.items['health']['max'] = args.health
+  crafter.constants.items['health']['initial'] = args.health
+  env = crafter.Env(args.area, args.view, args.window, args.length, args.seed)
   env.reset()
   achievements = set()
   duration = 0

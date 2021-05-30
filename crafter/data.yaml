@@ -37,18 +37,22 @@ walkable:
   - sand
 
 items:
-  - wood
-  - stone
-  - coal
-  - iron
-  - diamond
-  - wood_pickaxe
-  - stone_pickaxe
-  - iron_pickaxe
-  - wood_sword
-  - stone_sword
-  - iron_sword
-  - fence
+  health: {max: 5, initial: 5}
+  food: {max: 5, initial: 5}
+  drink: {max: 5, initial: 5}
+  # energy: {max: 5, initial: 5}
+  wood: {max: 10, initial: 0}
+  stone: {max: 10, initial: 0}
+  coal: {max: 10, initial: 0}
+  iron: {max: 10, initial: 0}
+  diamond: {max: 10, initial: 0}
+  wood_pickaxe: {max: 10, initial: 0}
+  stone_pickaxe: {max: 10, initial: 0}
+  iron_pickaxe: {max: 10, initial: 0}
+  wood_sword: {max: 10, initial: 0}
+  stone_sword: {max: 10, initial: 0}
+  iron_sword: {max: 10, initial: 0}
+  fence: {max: 10, initial: 0}
 
 collect:
   tree: {require: {}, receive: {wood: 1}, leaves: grass}
@@ -56,6 +60,7 @@ collect:
   coal: {require: {wood_pickaxe: 1}, receive: {coal: 1}, leaves: path}
   iron: {require: {stone_pickaxe: 1}, receive: {iron: 1}, leaves: path}
   diamond: {require: {iron_pickaxe: 1}, receive: {diamond: 1}, leaves: path}
+  water: {require: {}, receive: {drink: 1}, leaves: water}
 
 place:
   stone: {uses: {stone: 1}, where: [grass, sand, path, water, lava], type: material}
@@ -79,6 +84,7 @@ achievements:
   - collect_iron
   - collect_stone
   - collect_tree
+  - collect_water
   - defeat_skeleton
   - defeat_zombie
   - find_food

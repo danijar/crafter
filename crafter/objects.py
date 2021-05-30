@@ -10,7 +10,7 @@ class Object:
     self.world = world
     self.pos = np.array(pos)
     self.random = world.random
-    self.health = 0
+    self.inventory = {'health': 0}
 
   @property
   def texture(self):
@@ -19,6 +19,14 @@ class Object:
   @property
   def walkable(self):
     return constants.walkable
+
+  @property
+  def health(self):
+    return self.inventory['health']
+
+  @health.setter
+  def health(self, value):
+    self.inventory['health'] = value
 
   @property
   def all_dirs(self):
@@ -58,16 +66,16 @@ class Object:
 
 class Player(Object):
 
-  def __init__(self, world, pos, health):
+  def __init__(self, world, pos):
     super().__init__(world, pos)
     self.facing = (0, 1)
-    self.health = health
-    self.inventory = {item: 0 for item in constants.items}
+    self.inventory = {
+        name: info['initial'] for name, info in constants.items.items()}
     self.achievements = {name: 0 for name in constants.achievements}
-    self._max_health = health
-    self.hunger = 0
-    self.thirst = 0
-    self.fatigue = 0
+    self._hunger = 0
+    self._thirst = 0
+    self._fatigue = 0
+    self._regen = 0
 
   @property
   def texture(self):
@@ -83,10 +91,7 @@ class Player(Object):
     return constants.walkable + ['lava']
 
   def update(self, action):
-    self.hunger += 1
-    if self.hunger > 100:
-      self.health -= 1
-      self.hunger = 0
+    self._update_life_vars()
     target = (self.pos[0] + self.facing[0], self.pos[1] + self.facing[1])
     material, obj = self.world[target]
     action = constants.actions[action]
@@ -95,15 +100,45 @@ class Player(Object):
     elif action.startswith('move_'):
       self._move(action[len('move_'):])
     elif action == 'do' and obj:
-      self._interact(obj)
+      self._do_object(obj)
     elif action == 'do':
-      self._collect(target, material)
+      self._do_material(target, material)
     elif action.startswith('place_'):
       self._place(action[len('place_'):], target, material)
     elif action.startswith('make_'):
       self._make(action[len('make_'):])
-    for item, amount in self.inventory.items():
-      self.inventory[item] = max(0, min(amount, 9))
+    for name, amount in self.inventory.items():
+      maxmium = constants.items[name]['max']
+      self.inventory[name] = max(0, min(amount, maxmium))
+
+  def _update_life_vars(self):
+    missing = False
+    self._hunger += 1
+    if self._hunger >= 30:
+      self._hunger = 0
+      if self.inventory['food']:
+        self.inventory['food'] -= 1
+      else:
+        missing = True
+
+    self._thirst += 1
+    if self._thirst >= 30:
+      self._thirst = 0
+      if self.inventory['drink']:
+        self.inventory['drink'] -= 1
+      else:
+        missing = True
+
+    if self.inventory['food'] > 0 and self.inventory['drink'] > 0:
+      self._regen += 1
+      if self._regen >= 50:
+        self.health += 1
+        self._regen = 0
+    else:
+      self._regen = 0
+
+    if missing:
+      self.health -= 1
 
   def _move(self, direction):
     directions = dict(left=(-1, 0), right=(+1, 0), up=(0, -1), down=(0, +1))
@@ -112,7 +147,7 @@ class Player(Object):
     if self.world[self.pos][0] == 'lava':
       self.health = 0
 
-  def _interact(self, obj):
+  def _do_object(self, obj):
     damage = max([
         1,
         self.inventory['wood_sword'] and 2,
@@ -134,11 +169,15 @@ class Player(Object):
     if isinstance(obj, Cow):
       obj.health -= damage
       if obj.health <= 0:
-        self.health = min(self.health + 1, self._max_health)
-        self.hunger = 0
+        self.inventory['food'] += 3
+        self._hunger = 0
         self.achievements['find_food'] += 1
 
-  def _collect(self, target, material):
+  def _do_material(self, target, material):
+    if material == 'water':
+      # TODO: Keep track of previous inventory state to do this in a more
+      # general way.
+      self._thirst = 0
     info = constants.collect.get(material)
     if not info:
       return
