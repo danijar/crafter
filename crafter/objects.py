@@ -75,7 +75,9 @@ class Player(Object):
     self._hunger = 0
     self._thirst = 0
     self._fatigue = 0
+    self._degen = 0
     self._regen = 0
+    self._sleeping = 0
 
   @property
   def texture(self):
@@ -91,10 +93,16 @@ class Player(Object):
     return constants.walkable + ['lava']
 
   def update(self, action):
-    self._update_life_vars()
     target = (self.pos[0] + self.facing[0], self.pos[1] + self.facing[1])
     material, obj = self.world[target]
     action = constants.actions[action]
+    if self._sleeping:
+      self._sleeping -= 1
+      action = 'noop'
+      if self._sleeping == 0:
+        self.inventory['energy'] += 1
+        if self.inventory['energy'] < constants.items['energy']['max']:
+          action = 'sleep'
     if action == 'noop':
       pass
     elif action.startswith('move_'):
@@ -103,42 +111,52 @@ class Player(Object):
       self._do_object(obj)
     elif action == 'do':
       self._do_material(target, material)
+    elif action == 'sleep':
+      self._sleeping = 10
     elif action.startswith('place_'):
       self._place(action[len('place_'):], target, material)
     elif action.startswith('make_'):
       self._make(action[len('make_'):])
+    self._update_life_vars()
     for name, amount in self.inventory.items():
       maxmium = constants.items[name]['max']
       self.inventory[name] = max(0, min(amount, maxmium))
 
   def _update_life_vars(self):
-    missing = False
     self._hunger += 1
-    if self._hunger >= 30:
+    if self._hunger >= 40:
       self._hunger = 0
-      if self.inventory['food']:
-        self.inventory['food'] -= 1
-      else:
-        missing = True
+      self.inventory['food'] -= 1
 
     self._thirst += 1
-    if self._thirst >= 30:
+    if self._thirst >= 40:
       self._thirst = 0
-      if self.inventory['drink']:
-        self.inventory['drink'] -= 1
-      else:
-        missing = True
+      self.inventory['drink'] -= 1
 
-    if self.inventory['food'] > 0 and self.inventory['drink'] > 0:
+    self._fatigue += 1
+    if self._sleeping:
+      self._fatigue = 0
+    elif self._fatigue >= 50:
+      self._fatigue = 0
+      self.inventory['energy'] -= 1
+
+    if self._degen >= 30:
+      self._degen = 0
+      self.health -= 1
+
+    necessities = (
+        self.inventory['food'] > 0,
+        self.inventory['drink'] > 0,
+        self.inventory['energy'] > 0)
+    if all(necessities):
+      self._degen = 0
       self._regen += 1
       if self._regen >= 50:
         self.health += 1
         self._regen = 0
     else:
       self._regen = 0
-
-    if missing:
-      self.health -= 1
+      self._degen += 1
 
   def _move(self, direction):
     directions = dict(left=(-1, 0), right=(+1, 0), up=(0, -1), down=(0, +1))

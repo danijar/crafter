@@ -5,6 +5,7 @@ actions:
   - move_up
   - move_down
   - do
+  - sleep
   - place_stone
   - place_table
   - place_furnace
@@ -40,7 +41,7 @@ items:
   health: {max: 5, initial: 5}
   food: {max: 5, initial: 5}
   drink: {max: 5, initial: 5}
-  # energy: {max: 5, initial: 5}
+  energy: {max: 5, initial: 5}
   wood: {max: 10, initial: 0}
   stone: {max: 10, initial: 0}
   coal: {max: 10, initial: 0}

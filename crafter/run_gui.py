@@ -28,17 +28,20 @@ def main():
       pygame.K_w: 'move_up',
       pygame.K_s: 'move_down',
       pygame.K_SPACE: 'do',
-      pygame.K_y: 'place_stone',
-      pygame.K_u: 'place_table',
-      pygame.K_i: 'place_furnace',
-      pygame.K_o: 'place_fence',
-      pygame.K_1: 'make_fence',
-      pygame.K_2: 'make_wood_pickaxe',
-      pygame.K_3: 'make_stone_pickaxe',
-      pygame.K_4: 'make_iron_pickaxe',
-      pygame.K_5: 'make_wood_sword',
-      pygame.K_6: 'make_stone_sword',
-      pygame.K_7: 'make_iron_sword',
+      pygame.K_TAB: 'sleep',
+
+      pygame.K_r: 'place_stone',
+      pygame.K_t: 'place_table',
+      pygame.K_f: 'place_furnace',
+      pygame.K_g: 'place_fence',
+
+      pygame.K_1: 'make_wood_pickaxe',
+      pygame.K_2: 'make_stone_pickaxe',
+      pygame.K_3: 'make_iron_pickaxe',
+      pygame.K_4: 'make_wood_sword',
+      pygame.K_5: 'make_stone_sword',
+      pygame.K_6: 'make_iron_sword',
+      pygame.K_7: 'make_fence',
   }
   print('Actions:')
   for key, action in keymap.items():
