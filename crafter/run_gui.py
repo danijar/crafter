@@ -1,11 +1,13 @@
 import argparse
 
+import numpy as np
 import imageio
 try:
   import pygame
 except ImportError:
   print('Please install the pygame package to use the GUI.')
   raise
+from PIL import Image
 
 import crafter
 
@@ -18,6 +20,7 @@ def main():
   parser.add_argument('--length', type=int, default=None)
   parser.add_argument('--health', type=int, default=5)
   parser.add_argument('--window', type=int, nargs=2, default=(1280, 720))
+  parser.add_argument('--size', type=int, nargs=2, default=(0, 0))
   parser.add_argument('--record', type=str, default=None)
   parser.add_argument('--fps', type=int, default=5)
   args = parser.parse_args()
@@ -33,7 +36,6 @@ def main():
       pygame.K_r: 'place_stone',
       pygame.K_t: 'place_table',
       pygame.K_f: 'place_furnace',
-      pygame.K_g: 'place_fence',
 
       pygame.K_1: 'make_wood_pickaxe',
       pygame.K_2: 'make_stone_pickaxe',
@@ -41,7 +43,6 @@ def main():
       pygame.K_4: 'make_wood_sword',
       pygame.K_5: 'make_stone_sword',
       pygame.K_6: 'make_iron_sword',
-      pygame.K_7: 'make_fence',
   }
   print('Actions:')
   for key, action in keymap.items():
@@ -49,7 +50,12 @@ def main():
 
   crafter.constants.items['health']['max'] = args.health
   crafter.constants.items['health']['initial'] = args.health
-  env = crafter.Env(args.area, args.view, args.window, args.length, args.seed)
+
+  size = list(args.size)
+  size[0] = size[0] or args.window[0]
+  size[1] = size[1] or args.window[1]
+
+  env = crafter.Env(args.area, args.view, size, args.length, args.seed)
   env.reset()
   achievements = set()
   duration = 0
@@ -106,6 +112,10 @@ def main():
     duration += 1
     if args.record:
       frames.append(obs)
+    if size != args.window:
+      obs = Image.fromarray(obs)
+      obs = obs.resize(args.window, resample=Image.NEAREST)
+      obs = np.array(obs)
     surface = pygame.surfarray.make_surface(obs.transpose((1, 0, 2)))
     screen.blit(surface, (0, 0))
     pygame.display.flip()
