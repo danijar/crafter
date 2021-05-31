@@ -9,14 +9,14 @@ actions:
   - place_stone
   - place_table
   - place_furnace
-  - place_fence
+  # - place_fence
   - make_wood_pickaxe
   - make_stone_pickaxe
   - make_iron_pickaxe
   - make_wood_sword
   - make_stone_sword
   - make_iron_sword
-  - make_fence
+  # - make_fence
 
 materials:
   - water
@@ -42,18 +42,18 @@ items:
   food: {max: 5, initial: 5}
   drink: {max: 5, initial: 5}
   energy: {max: 5, initial: 5}
-  wood: {max: 10, initial: 0}
-  stone: {max: 10, initial: 0}
-  coal: {max: 10, initial: 0}
-  iron: {max: 10, initial: 0}
-  diamond: {max: 10, initial: 0}
-  wood_pickaxe: {max: 10, initial: 0}
-  stone_pickaxe: {max: 10, initial: 0}
-  iron_pickaxe: {max: 10, initial: 0}
-  wood_sword: {max: 10, initial: 0}
-  stone_sword: {max: 10, initial: 0}
-  iron_sword: {max: 10, initial: 0}
-  fence: {max: 10, initial: 0}
+  wood: {max: 9, initial: 0}
+  stone: {max: 9, initial: 0}
+  coal: {max: 9, initial: 0}
+  iron: {max: 9, initial: 0}
+  diamond: {max: 9, initial: 0}
+  wood_pickaxe: {max: 9, initial: 0}
+  stone_pickaxe: {max: 9, initial: 0}
+  iron_pickaxe: {max: 9, initial: 0}
+  wood_sword: {max: 9, initial: 0}
+  stone_sword: {max: 9, initial: 0}
+  iron_sword: {max: 9, initial: 0}
+  # fence: {max: 9, initial: 0}
 
 collect:
   tree: {require: {}, receive: {wood: 1}, leaves: grass}
@@ -67,7 +67,7 @@ place:
   stone: {uses: {stone: 1}, where: [grass, sand, path, water, lava], type: material}
   table: {uses: {wood: 2}, where: [grass, sand, path], type: material}
   furnace: {uses: {stone: 4}, where: [grass, sand, path], type: material}
-  fence: {uses: {fence: 1}, where: [grass, sand, path], type: object}
+  # fence: {uses: {fence: 1}, where: [grass, sand, path], type: object}
 
 make:
   wood_pickaxe: {uses: {wood: 1}, nearby: [table], gives: 1}
@@ -76,12 +76,12 @@ make:
   wood_sword: {uses: {wood: 1}, nearby: [table], gives: 1}
   stone_sword: {uses: {wood: 1, stone: 1}, nearby: [table], gives: 1}
   iron_sword: {uses: {wood: 1, coal: 1, iron: 1}, nearby: [table, furnace], gives: 1}
-  fence: {uses: {wood: 1}, nearby: [table], gives: 4}
+  # fence: {uses: {wood: 1}, nearby: [table], gives: 4}
 
 achievements:
   - collect_coal
   - collect_diamond
-  - collect_fence
+  # - collect_fence
   - collect_iron
   - collect_stone
   - collect_tree
@@ -89,14 +89,14 @@ achievements:
   - defeat_skeleton
   - defeat_zombie
   - find_food
-  - make_fence
+  # - make_fence
   - make_iron_pickaxe
   - make_iron_sword
   - make_stone_pickaxe
   - make_stone_sword
   - make_wood_pickaxe
   - make_wood_sword
-  - place_fence
+  # - place_fence
   - place_furnace
   - place_stone
   - place_table

@@ -81,6 +81,8 @@ class Player(Object):
 
   @property
   def texture(self):
+    if self._sleeping:
+      return 'player-sleep'
     return {
         (-1, 0): 'player-left',
         (+1, 0): 'player-right',
@@ -112,7 +114,7 @@ class Player(Object):
     elif action == 'do':
       self._do_material(target, material)
     elif action == 'sleep':
-      self._sleeping = 10
+      self._sleeping = 30
     elif action.startswith('place_'):
       self._place(action[len('place_'):], target, material)
     elif action.startswith('make_'):
@@ -124,12 +126,12 @@ class Player(Object):
 
   def _update_life_vars(self):
     self._hunger += 1
-    if self._hunger >= 40:
+    if self._hunger >= 50:
       self._hunger = 0
       self.inventory['food'] -= 1
 
     self._thirst += 1
-    if self._thirst >= 40:
+    if self._thirst >= 50:
       self._thirst = 0
       self.inventory['drink'] -= 1
 
