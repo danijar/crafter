@@ -27,7 +27,7 @@ class staticproperty:
 
 class World:
 
-  def __init__(self, area, materials, chunk_size=(16, 16)):
+  def __init__(self, area, materials, chunk_size):
     self.area = area
     self._chunk_size = chunk_size
     self._mat_names = {i: x for i, x in enumerate([None] + materials)}
@@ -36,7 +36,7 @@ class World:
 
   def reset(self, seed=None):
     self.random = np.random.RandomState(seed)
-    self.chunks = collections.defaultdict(set)
+    self._chunks = collections.defaultdict(set)
     self._objects = [None]
     self._mat_map = np.zeros(self.area, np.uint8)
     self._obj_map = np.zeros(self.area, np.uint32)
@@ -46,6 +46,10 @@ class World:
     # Return a new list so the objects cannot change while being iterated over.
     return [obj for obj in self._objects if obj]
 
+  @property
+  def chunks(self):
+    return self._chunks.copy()
+
   def add(self, obj):
     assert hasattr(obj, 'pos')
     obj.pos = np.array(obj.pos)
@@ -53,12 +57,12 @@ class World:
     index = len(self._objects)
     self._objects.append(obj)
     self._obj_map[tuple(obj.pos)] = index
-    self.chunks[self.chunk_key(obj.pos)].add(obj)
+    self._chunks[self.chunk_key(obj.pos)].add(obj)
 
   def remove(self, obj):
     self._objects[self._obj_map[tuple(obj.pos)]] = None
     self._obj_map[tuple(obj.pos)] = 0
-    self.chunks[self.chunk_key(obj.pos)].remove(obj)
+    self._chunks[self.chunk_key(obj.pos)].remove(obj)
 
   def move(self, obj, pos):
     pos = np.array(pos)
@@ -69,8 +73,8 @@ class World:
     old_chunk = self.chunk_key(obj.pos)
     new_chunk = self.chunk_key(pos)
     if old_chunk != new_chunk:
-      self.chunks[old_chunk].remove(obj)
-      self.chunks[new_chunk].add(obj)
+      self._chunks[old_chunk].remove(obj)
+      self._chunks[new_chunk].add(obj)
     obj.pos = pos
 
   def __setitem__(self, pos, material):
@@ -95,6 +99,10 @@ class World:
         x - d: x + d, y - d: y + d].flatten().tolist()
     objs = {self._objects[i] for i in indices if i > 0}
     return materials, objs
+
+  def mask(self, xmin, xmax, ymin, ymax, material):
+    region = self._mat_map[xmin: xmax, ymin: ymax]
+    return (region == self._mat_ids[material])
 
   def count(self, material):
     if material not in self._mat_ids:

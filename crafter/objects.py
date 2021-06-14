@@ -247,7 +247,6 @@ class Cow(Object):
   def __init__(self, world, pos):
     super().__init__(world, pos)
     self.health = 3
-    # self.fertile = 0
 
   @property
   def texture(self):
@@ -256,28 +255,9 @@ class Cow(Object):
   def update(self):
     if self.health <= 0:
       self.world.remove(self)
-    # self.fertile += 1
     if self.random.uniform() < 0.5:
       direction = self.random_dir()
-      # self._maybe_mate(direction)
       self.move(direction)
-
-  # def _maybe_mate(self, direction):
-  #   if self.fertile < 100:
-  #     return
-  #   if not isinstance(self.world[self.pos + direction][1], Cow):
-  #     return
-  #   frees = [self.pos + x for x in self.all_dirs if x != direction]
-  #   if any(isinstance(self.world[x][1], Cow) for x in frees):
-  #     return
-  #   frees = [x for x in frees if self.is_free(x)]
-  #   if len(frees) < 2:
-  #     return
-  #   if self.random.uniform() < 0.1:
-  #     self.fertile = 0
-  #     target = frees[self.random.randint(0, len(frees))]
-  #     self.world.add(Cow(self.world, target))
-  #     print('Cows just mated.')
 
 
 class Zombie(Object):
@@ -303,7 +283,7 @@ class Zombie(Object):
         self.player.health -= 1
     else:
       self.near = False
-    if dist <= 6 and self.random.uniform() < 0.8:
+    if dist <= 8 and self.random.uniform() < 0.8:
       self.move(self.toward(self.player, self.random.uniform() < 0.7))
     else:
       self.move(self.random_dir())

@@ -20,7 +20,7 @@ class Env:
     self._seed = seed
     self._episode = 0
 
-    self._world = engine.World(area, constants.materials)
+    self._world = engine.World(area, constants.materials, (8, 8))
 
     self._textures = engine.Textures(constants.root / 'assets')
 
@@ -67,10 +67,9 @@ class Env:
     self._player.action = constants.actions[action]
     for obj in self._world.objects:
       obj.update()
-    # print('')
-    # TODO: This should be run less frequently than every step.
-    for chunk, objs in self._world.chunks.items():
-      self._balance_chunk(chunk, objs)
+    if self._step % 10 == 0:
+      for chunk, objs in self._world.chunks.items():
+        self._balance_chunk(chunk, objs)
     obs = self._obs()
     reward = 0.0
     unlocked = {
@@ -110,7 +109,27 @@ class Env:
     return self.render()
 
   def _balance_chunk(self, chunk, objs):
-    # xmin, xmax, ymin, ymax = chunk
-    # zombies = sum(1 for obj in objs if isinstance(obj, objects.Zombie))
-    # print(chunk, 'zombies', zombies)
-    pass
+    xmin, xmax, ymin, ymax = chunk
+    random = self._world.random
+    zombies = [obj for obj in objs if isinstance(obj, objects.Zombie)]
+    mask = self._world.mask(*chunk, 'grass')
+    available = mask.sum()
+    if available < 50:
+      target = min(len(zombies), 1)
+    else:
+      target = 1
+    if len(zombies) < target and random.uniform() < 0.1:
+      xs = np.tile(np.arange(xmin, xmax)[:, None], [1, ymax - ymin])
+      ys = np.tile(np.arange(ymin, ymax)[None, :], [xmax - xmin, 1])
+      xs, ys = xs[mask], ys[mask]
+      i = random.randint(0, len(xs))
+      pos = np.array((xs[i], ys[i]))
+      empty = self._world[pos][1] is None
+      away = self._player.distance(pos) > 6
+      if empty and away:
+        self._world.add(objects.Zombie(self._world, pos, self._player))
+    elif len(zombies) > target and random.uniform() < 0.1:
+      obj = zombies[random.randint(0, len(zombies))]
+      away = self._player.distance(obj.pos) > 6
+      if away:
+        self._world.remove(obj)
