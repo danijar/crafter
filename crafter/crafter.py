@@ -19,20 +19,15 @@ class Env:
     self._length = length
     self._seed = seed
     self._episode = 0
-
     self._world = engine.World(area, constants.materials, (8, 8))
-
     self._textures = engine.Textures(constants.root / 'assets')
-
     item_rows = int(np.ceil(len(constants.items) / view[0]))
     self._local_view = engine.LocalView(
         self._world, self._textures, unit,
         [view[0], view[1] - item_rows])
-
     self._item_view = engine.ItemView(
         self._textures, unit, [view[0], item_rows])
     self._border = (size - unit * view) // 2
-
     self._step = None
     self._player = None
     self._last_health = None

@@ -73,16 +73,17 @@ class Player(Object):
         name: info['initial'] for name, info in constants.items.items()}
     self.achievements = {name: 0 for name in constants.achievements}
     self.action = 'noop'
+    self.sleeping = 0
+    self._last_health = self.health
     self._hunger = 0
     self._thirst = 0
     self._fatigue = 0
     self._degen = 0
     self._regen = 0
-    self._sleeping = 0
 
   @property
   def texture(self):
-    if self._sleeping:
+    if self.sleeping:
       return 'player-sleep'
     return {
         (-1, 0): 'player-left',
@@ -99,10 +100,10 @@ class Player(Object):
     target = (self.pos[0] + self.facing[0], self.pos[1] + self.facing[1])
     material, obj = self.world[target]
     action = self.action
-    if self._sleeping:
-      self._sleeping -= 1
+    if self.sleeping:
+      self.sleeping -= 1
       action = 'noop'
-      if self._sleeping == 0:
+      if self.sleeping == 0:
         self.inventory['energy'] += 1
         if self.inventory['energy'] < constants.items['energy']['max']:
           action = 'sleep'
@@ -115,38 +116,35 @@ class Player(Object):
     elif action == 'do':
       self._do_material(target, material)
     elif action == 'sleep':
-      self._sleeping = 30
+      self.sleeping = 20
     elif action.startswith('place_'):
       self._place(action[len('place_'):], target, material)
     elif action.startswith('make_'):
       self._make(action[len('make_'):])
-    self._update_life_vars()
+    self._update_life_stats()
+    self._degen_or_regen_health()
+    self._wake_up_when_hurt()
     for name, amount in self.inventory.items():
       maxmium = constants.items[name]['max']
       self.inventory[name] = max(0, min(amount, maxmium))
 
-  def _update_life_vars(self):
+  def _update_life_stats(self):
     self._hunger += 1
     if self._hunger >= 50:
       self._hunger = 0
       self.inventory['food'] -= 1
-
     self._thirst += 1
     if self._thirst >= 50:
       self._thirst = 0
       self.inventory['drink'] -= 1
-
     self._fatigue += 1
-    if self._sleeping:
+    if self.sleeping:
       self._fatigue = 0
     elif self._fatigue >= 50:
       self._fatigue = 0
       self.inventory['energy'] -= 1
 
-    if self._degen >= 30:
-      self._degen = 0
-      self.health -= 1
-
+  def _degen_or_regen_health(self):
     necessities = (
         self.inventory['food'] > 0,
         self.inventory['drink'] > 0,
@@ -160,6 +158,14 @@ class Player(Object):
     else:
       self._regen = 0
       self._degen += 1
+    if self._degen >= 30:
+      self._degen = 0
+      self.health -= 1
+
+  def _wake_up_when_hurt(self):
+    if self._last_health < self.health:
+      self.sleeping = 0
+    self._last_health = self.health
 
   def _move(self, direction):
     directions = dict(left=(-1, 0), right=(+1, 0), up=(0, -1), down=(0, +1))
@@ -280,7 +286,10 @@ class Zombie(Object):
       if not self.near:
         self.near = True
       elif self.random.uniform() > 0.7:
-        self.player.health -= 1
+        damage = 1
+        if self.player.sleeping:
+          damage = self.player.health
+        self.player.health -= damage
     else:
       self.near = False
     if dist <= 8 and self.random.uniform() < 0.8:

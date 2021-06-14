@@ -178,7 +178,15 @@ class LocalView:
         continue
       texture = self._textures.get(obj.texture, self._unit)
       _draw_alpha(canvas, pos * self._unit, texture)
+    if player.sleeping:
+      canvas = self._tint(canvas, (32, 0, 64), 0.5)
+    if player.health < 1:
+      canvas = self._tint(canvas, (128, 0, 0), 0.6)
     return canvas
+
+  def _tint(self, canvas, color, amount):
+    color = np.array(color)
+    return (1 - amount) * canvas + amount * color
 
 
 class ItemView:
