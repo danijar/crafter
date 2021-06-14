@@ -36,6 +36,7 @@ def main():
       pygame.K_r: 'place_stone',
       pygame.K_t: 'place_table',
       pygame.K_f: 'place_furnace',
+      pygame.K_p: 'place_plant',
 
       pygame.K_1: 'make_wood_pickaxe',
       pygame.K_2: 'make_stone_pickaxe',

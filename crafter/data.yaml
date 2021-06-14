@@ -9,6 +9,7 @@ actions:
   - place_stone
   - place_table
   - place_furnace
+  - place_plant
   - make_wood_pickaxe
   - make_stone_pickaxe
   - make_iron_pickaxe
@@ -40,6 +41,7 @@ items:
   food: {max: 5, initial: 5}
   drink: {max: 5, initial: 5}
   energy: {max: 5, initial: 5}
+  sapling: {max: 9, initial: 0}
   wood: {max: 9, initial: 0}
   stone: {max: 9, initial: 0}
   coal: {max: 9, initial: 0}
@@ -59,11 +61,13 @@ collect:
   iron: {require: {stone_pickaxe: 1}, receive: {iron: 1}, leaves: path}
   diamond: {require: {iron_pickaxe: 1}, receive: {diamond: 1}, leaves: path}
   water: {require: {}, receive: {drink: 1}, leaves: water}
+  grass: {require: {}, receive: {sapling: 1}, probability: 0.1, leaves: grass}
 
 place:
   stone: {uses: {stone: 1}, where: [grass, sand, path, water, lava], type: material}
   table: {uses: {wood: 2}, where: [grass, sand, path], type: material}
   furnace: {uses: {stone: 4}, where: [grass, sand, path], type: material}
+  plant: {uses: {sapling: 1}, where: [grass], type: object}
 
 make:
   wood_pickaxe: {uses: {wood: 1}, nearby: [table], gives: 1}
@@ -76,13 +80,15 @@ make:
 achievements:
   - collect_coal
   - collect_diamond
+  - collect_drink
   - collect_iron
+  - collect_sapling
   - collect_stone
-  - collect_tree
-  - collect_water
+  - collect_wood
   - defeat_skeleton
   - defeat_zombie
-  - find_food
+  - eat_cow
+  - eat_plant
   - make_iron_pickaxe
   - make_iron_sword
   - make_stone_pickaxe
@@ -90,5 +96,6 @@ achievements:
   - make_wood_pickaxe
   - make_wood_sword
   - place_furnace
+  - place_plant
   - place_stone
   - place_table

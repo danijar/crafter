@@ -180,6 +180,11 @@ class Player(Object):
         self.inventory['stone_sword'] and 3,
         self.inventory['iron_sword'] and 5,
     ])
+    if isinstance(obj, Plant):
+      if obj.ripe:
+        obj.grown = 0
+        self.inventory['food'] += 2
+        self.achievements['eat_plant'] += 1
     if isinstance(obj, Fence):
       self.world.remove(obj)
       self.inventory['fence'] += 1
@@ -196,8 +201,10 @@ class Player(Object):
       obj.health -= damage
       if obj.health <= 0:
         self.inventory['food'] += 3
+        self.achievements['eat_cow'] += 1
+        # TODO: Keep track of previous inventory state to do this in a more
+        # general way.
         self._hunger = 0
-        self.achievements['find_food'] += 1
 
   def _do_material(self, target, material):
     if material == 'water':
@@ -210,10 +217,11 @@ class Player(Object):
     for name, amount in info['require'].items():
       if self.inventory[name] < amount:
         return
-    for name, amount in info['receive'].items():
-      self.inventory[name] += amount
     self.world[target] = info['leaves']
-    self.achievements[f'collect_{material}'] += 1
+    if self.random.uniform() <= info.get('probability', 1):
+      for name, amount in info['receive'].items():
+        self.inventory[name] += amount
+        self.achievements[f'collect_{name}'] += 1
 
   def _place(self, name, target, material):
     if self.world[target][1]:
@@ -230,12 +238,13 @@ class Player(Object):
     elif info['type'] == 'object':
       cls = {
           'fence': Fence,
+          'plant': Plant,
       }[name]
       self.world.add(cls(self.world, target))
     self.achievements[f'place_{name}'] += 1
 
   def _make(self, name):
-    nearby, _ = self.world.nearby(self.pos, 2)
+    nearby, _ = self.world.nearby(self.pos, 1)
     info = constants.make[name]
     if not all(util in nearby for util in info['nearby']):
       return
@@ -367,6 +376,33 @@ class Arrow(Object):
         self.world[target] = 'path'
     else:
       self.move(self.facing)
+
+
+class Plant(Object):
+
+  def __init__(self, world, pos):
+    super().__init__(world, pos)
+    self.health = 1
+    self.grown = 0
+
+  @property
+  def texture(self):
+    if self.ripe:
+      return 'plant-ripe'
+    else:
+      return 'plant'
+
+  @property
+  def ripe(self):
+    return self.grown > 150
+
+  def update(self):
+    self.grown += 1
+    objs = [self.world[self.pos + dir_][1] for dir_ in self.all_dirs]
+    if any(isinstance(obj, (Zombie, Skeleton, Cow)) for obj in objs):
+      self.health -= 1
+    if self.health <= 0:
+      self.world.remove(self)
 
 
 class Fence(Object):

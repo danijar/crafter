@@ -60,6 +60,8 @@ class World:
     self._chunks[self.chunk_key(obj.pos)].add(obj)
 
   def remove(self, obj):
+    if obj.removed:
+      return
     self._objects[self._obj_map[tuple(obj.pos)]] = None
     self._obj_map[tuple(obj.pos)] = 0
     self._chunks[self.chunk_key(obj.pos)].remove(obj)
@@ -96,10 +98,10 @@ class World:
   def nearby(self, pos, distance):
     (x, y), d = pos, distance
     ids = set(self._mat_map[
-        x - d: x + d, y - d: y + d].flatten().tolist())
+        x - d: x + d + 1, y - d: y + d + 1].flatten().tolist())
     materials = tuple(self._mat_names[x] for x in ids)
     indices = self._obj_map[
-        x - d: x + d, y - d: y + d].flatten().tolist()
+        x - d: x + d + 1, y - d: y + d + 1].flatten().tolist()
     objs = {self._objects[i] for i in indices if i > 0}
     return materials, objs
 
