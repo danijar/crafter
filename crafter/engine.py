@@ -63,8 +63,11 @@ class World:
     self._objects[self._obj_map[tuple(obj.pos)]] = None
     self._obj_map[tuple(obj.pos)] = 0
     self._chunks[self.chunk_key(obj.pos)].remove(obj)
+    obj.removed = True
 
   def move(self, obj, pos):
+    if obj.removed:
+      return
     pos = np.array(pos)
     assert self._obj_map[tuple(pos)] == 0
     index = self._obj_map[tuple(obj.pos)]

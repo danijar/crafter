@@ -11,6 +11,7 @@ class Object:
     self.pos = np.array(pos)
     self.random = world.random
     self.inventory = {'health': 0}
+    self.removed = False
 
   @property
   def texture(self):
@@ -73,13 +74,12 @@ class Player(Object):
         name: info['initial'] for name, info in constants.items.items()}
     self.achievements = {name: 0 for name in constants.achievements}
     self.action = 'noop'
-    self.sleeping = 0
+    self.sleeping = False
     self._last_health = self.health
     self._hunger = 0
     self._thirst = 0
     self._fatigue = 0
-    self._degen = 0
-    self._regen = 0
+    self._recover = 0
 
   @property
   def texture(self):
@@ -101,12 +101,10 @@ class Player(Object):
     material, obj = self.world[target]
     action = self.action
     if self.sleeping:
-      self.sleeping -= 1
-      action = 'noop'
-      if self.sleeping == 0:
-        self.inventory['energy'] += 1
-        if self.inventory['energy'] < constants.items['energy']['max']:
-          action = 'sleep'
+      if self.inventory['energy'] < constants.items['energy']['max']:
+        action = 'sleep'
+      else:
+        self.sleeping = False
     if action == 'noop':
       pass
     elif action.startswith('move_'):
@@ -116,31 +114,34 @@ class Player(Object):
     elif action == 'do':
       self._do_material(target, material)
     elif action == 'sleep':
-      self.sleeping = 20
+      self.sleeping = True
     elif action.startswith('place_'):
       self._place(action[len('place_'):], target, material)
     elif action.startswith('make_'):
       self._make(action[len('make_'):])
     self._update_life_stats()
     self._degen_or_regen_health()
-    self._wake_up_when_hurt()
     for name, amount in self.inventory.items():
       maxmium = constants.items[name]['max']
       self.inventory[name] = max(0, min(amount, maxmium))
+    # This needs to happen after the inventory states are clamped
+    # because it involves the health water inventory count.
+    self._wake_up_when_hurt()
 
   def _update_life_stats(self):
-    self._hunger += 1
-    if self._hunger >= 50:
+    self._hunger += 0.5 if self.sleeping else 1
+    if self._hunger > 50:
       self._hunger = 0
       self.inventory['food'] -= 1
-    self._thirst += 1
-    if self._thirst >= 50:
+    self._thirst += 0.5 if self.sleeping else 1
+    if self._thirst > 50:
       self._thirst = 0
       self.inventory['drink'] -= 1
-    self._fatigue += 1
-    if self.sleeping:
+    self._fatigue += -1 if self.sleeping else +1
+    if self._fatigue < -20:
       self._fatigue = 0
-    elif self._fatigue >= 50:
+      self.inventory['energy'] += 1
+    if self._fatigue > 80:
       self._fatigue = 0
       self.inventory['energy'] -= 1
 
@@ -150,21 +151,19 @@ class Player(Object):
         self.inventory['drink'] > 0,
         self.inventory['energy'] > 0)
     if all(necessities):
-      self._degen = 0
-      self._regen += 1
-      if self._regen >= 50:
-        self.health += 1
-        self._regen = 0
+      self._recover += 2 if self.sleeping else 1
     else:
-      self._regen = 0
-      self._degen += 1
-    if self._degen >= 30:
-      self._degen = 0
+      self._recover -= 0.5 if self.sleeping else 1
+    if self._recover > 50:
+      self._recover = 0
+      self.health += 1
+    if self._recover < -30:
+      self._recover = 0
       self.health -= 1
 
   def _wake_up_when_hurt(self):
-    if self._last_health < self.health:
-      self.sleeping = 0
+    if self.health < self._last_health:
+      self.sleeping = False
     self._last_health = self.health
 
   def _move(self, direction):
@@ -364,6 +363,8 @@ class Arrow(Object):
       self.world.remove(self)
     elif material not in self.walkable:
       self.world.remove(self)
+      if material in ['table', 'furnace']:
+        self.world[target] = 'path'
     else:
       self.move(self.facing)
 
