@@ -27,81 +27,85 @@ class staticproperty:
 
 class World:
 
-  def __init__(self, area, seed=None):
-    self._terrain = np.zeros(area, np.uint8)
-    self._material_names = {0: None}
-    self._material_ids = {None: 0}
+  def __init__(self, area, materials, chunk_size=(16, 16)):
+    self.area = area
+    self._chunk_size = chunk_size
+    self._mat_names = {i: x for i, x in enumerate([None] + materials)}
+    self._mat_ids = {x: i for i, x in enumerate([None] + materials)}
+    self.reset()
+
+  def reset(self, seed=None):
+    self.random = np.random.RandomState(seed)
+    self.chunks = collections.defaultdict(set)
     self._objects = [None]
-    self._coords = np.zeros(area, np.uint32)
-    self._random = np.random.RandomState(seed)
-
-  @property
-  def area(self):
-    return self._terrain.shape
-
-  @property
-  def random(self):
-    return self._random
+    self._mat_map = np.zeros(self.area, np.uint8)
+    self._obj_map = np.zeros(self.area, np.uint32)
 
   @property
   def objects(self):
-    yield from (obj for obj in self._objects if obj)
-
-  def reset(self, seed=None):
-    # TODO: Not really needed. Can just create new instance.
-    self._random = np.random.RandomState(seed)
-    self._terrain[:] = 0
-    self._objects = [None]
-    self._coords[:] = 0
-
-  def __setitem__(self, pos, material):
-    if material not in self._material_ids:
-      id_ = len(self._material_ids)
-      self._material_ids[material] = id_
-      self._material_names[id_] = material
-    self._terrain[pos] = self._material_ids[material]
-
-  def __getitem__(self, pos):
-    if not _inside((0, 0), pos, self.area):
-      return None, None
-    material = self._material_names[self._terrain[tuple(pos)]]
-    if not (0 <= pos[0] < self._coords.shape[0]):
-      obj = False
-    elif not (0 <= pos[1] < self._coords.shape[1]):
-      obj = False
-    else:
-      obj = self._objects[self._coords[tuple(pos)]]
-    return material, obj
-
-  def nearby(self, pos, distance):
-    # TODO: Return both nearby materials and objects.
-    ids = set(self._terrain[
-        pos[0] - distance: pos[0] + distance,
-        pos[1] - distance: pos[1] + distance].flatten().tolist())
-    return tuple(self._material_names[x] for x in ids)
-
-  def count(self, material):
-    if material not in self._material_ids:
-      return 0
-    return (self._terrain == self._material_ids[material]).sum()
+    # Return a new list so the objects cannot change while being iterated over.
+    return [obj for obj in self._objects if obj]
 
   def add(self, obj):
     assert hasattr(obj, 'pos')
     obj.pos = np.array(obj.pos)
-    assert self[obj.pos][1] is None
-    self._coords[tuple(obj.pos)] = len(self._objects)
+    assert self._obj_map[tuple(obj.pos)] == 0
+    index = len(self._objects)
     self._objects.append(obj)
+    self._obj_map[tuple(obj.pos)] = index
+    self.chunks[self.chunk_key(obj.pos)].add(obj)
 
   def remove(self, obj):
-    self._objects[self._coords[tuple(obj.pos)]] = None
-    self._coords[tuple(obj.pos)] = 0
+    self._objects[self._obj_map[tuple(obj.pos)]] = None
+    self._obj_map[tuple(obj.pos)] = 0
+    self.chunks[self.chunk_key(obj.pos)].remove(obj)
 
   def move(self, obj, pos):
     pos = np.array(pos)
-    assert self[pos][1] is None
-    self._coords[tuple(pos)] = self._coords[tuple(obj.pos)]
-    self._coords[tuple(obj.pos)] = 0
+    assert self._obj_map[tuple(pos)] == 0
+    index = self._obj_map[tuple(obj.pos)]
+    self._obj_map[tuple(pos)] = index
+    self._obj_map[tuple(obj.pos)] = 0
+    old_chunk = self.chunk_key(obj.pos)
+    new_chunk = self.chunk_key(pos)
+    if old_chunk != new_chunk:
+      self.chunks[old_chunk].remove(obj)
+      self.chunks[new_chunk].add(obj)
     obj.pos = pos
+
+  def __setitem__(self, pos, material):
+    if material not in self._mat_ids:
+      id_ = len(self._mat_ids)
+      self._mat_ids[material] = id_
+    self._mat_map[tuple(pos)] = self._mat_ids[material]
+
+  def __getitem__(self, pos):
+    if not _inside((0, 0), pos, self.area):
+      return None, None
+    material = self._mat_names[self._mat_map[tuple(pos)]]
+    obj = self._objects[self._obj_map[tuple(pos)]]
+    return material, obj
+
+  def nearby(self, pos, distance):
+    (x, y), d = pos, distance
+    ids = set(self._mat_map[
+        x - d: x + d, y - d: y + d].flatten().tolist())
+    materials = tuple(self._mat_names[x] for x in ids)
+    indices = self._obj_map[
+        x - d: x + d, y - d: y + d].flatten().tolist()
+    objs = {self._objects[i] for i in indices if i > 0}
+    return materials, objs
+
+  def count(self, material):
+    if material not in self._mat_ids:
+      return 0
+    return (self._mat_map == self._mat_ids[material]).sum()
+
+  def chunk_key(self, pos):
+    (x, y), (csx, csy) = pos, self._chunk_size
+    xmin, ymin = (x // csx) * csx, (y // csy) * csy
+    xmax, ymax = xmin + csx, ymin + csy
+    return (xmin, xmax, ymin, ymax)
 
 
 class Textures:
@@ -116,6 +120,8 @@ class Textures:
       self._textures[(filename.stem, image.shape[:2])] = image
 
   def get(self, name, size):
+    if name is None:
+      name = 'unknown'
     size = int(size[0]), int(size[1])
     key = name, size
     if key not in self._textures:

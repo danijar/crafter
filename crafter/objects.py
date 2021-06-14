@@ -72,6 +72,7 @@ class Player(Object):
     self.inventory = {
         name: info['initial'] for name, info in constants.items.items()}
     self.achievements = {name: 0 for name in constants.achievements}
+    self.action = 'noop'
     self._hunger = 0
     self._thirst = 0
     self._fatigue = 0
@@ -94,10 +95,10 @@ class Player(Object):
   def walkable(self):
     return constants.walkable + ['lava']
 
-  def update(self, action):
+  def update(self):
     target = (self.pos[0] + self.facing[0], self.pos[1] + self.facing[1])
     material, obj = self.world[target]
-    action = constants.actions[action]
+    action = self.action
     if self._sleeping:
       self._sleeping -= 1
       action = 'noop'
@@ -229,7 +230,7 @@ class Player(Object):
     self.achievements[f'place_{name}'] += 1
 
   def _make(self, name):
-    nearby = self.world.nearby(self.pos, 2)
+    nearby, _ = self.world.nearby(self.pos, 2)
     info = constants.make[name]
     if not all(util in nearby for util in info['nearby']):
       return
