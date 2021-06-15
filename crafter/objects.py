@@ -134,14 +134,17 @@ class Player(Object):
       self._hunger = 0
       self.inventory['food'] -= 1
     self._thirst += 0.5 if self.sleeping else 1
-    if self._thirst > 50:
+    if self._thirst > 40:
       self._thirst = 0
       self.inventory['drink'] -= 1
-    self._fatigue += -1 if self.sleeping else +1
+    if self.sleeping:
+      self._fatigue = min(self._fatigue - 1, 0)
+    else:
+      self._fatigue += 1
     if self._fatigue < -20:
       self._fatigue = 0
       self.inventory['energy'] += 1
-    if self._fatigue > 80:
+    if self._fatigue > 60:
       self._fatigue = 0
       self.inventory['energy'] -= 1
 
