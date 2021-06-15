@@ -149,7 +149,7 @@ class Player(Object):
     necessities = (
         self.inventory['food'] > 0,
         self.inventory['drink'] > 0,
-        self.inventory['energy'] > 0)
+        self.inventory['energy'] > 0 or self.sleeping)
     if all(necessities):
       self._recover += 2 if self.sleeping else 1
     else:
