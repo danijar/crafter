@@ -117,7 +117,8 @@ class World:
   def chunk_key(self, pos):
     (x, y), (csx, csy) = pos, self._chunk_size
     xmin, ymin = (x // csx) * csx, (y // csy) * csy
-    xmax, ymax = xmin + csx, ymin + csy
+    xmax = min(xmin + csx, self.area[0])
+    ymax = min(ymin + csy, self.area[1])
     return (xmin, xmax, ymin, ymax)
 
 

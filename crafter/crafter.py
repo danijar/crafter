@@ -104,27 +104,39 @@ class Env:
     return self.render()
 
   def _balance_chunk(self, chunk, objs):
+    self._balance_object(
+        chunk, objs, objects.Zombie, 'grass', 7, 0.1, 0.1,
+        lambda pos: objects.Zombie(self._world, pos, self._player),
+        lambda num, space: min(num, 1) if space < 50 else 1)
+    self._balance_object(
+        chunk, objs, objects.Skeleton, 'path', 7, 0.1, 0.1,
+        lambda pos: objects.Skeleton(self._world, pos, self._player),
+        lambda num, space: min(num, 1) if space < 6 else min(max(1, num), 2))
+    self._balance_object(
+        chunk, objs, objects.Cow, 'grass', 5, 0.01, 0.1,
+        lambda pos: objects.Cow(self._world, pos),
+        lambda num, space: min(num, 1) if space < 30 else 2)
+
+  def _balance_object(
+      self, chunk, objs, cls, material, player_dist,
+      spawn_prob, despawn_prob, ctor, target_fn):
     xmin, xmax, ymin, ymax = chunk
     random = self._world.random
-    zombies = [obj for obj in objs if isinstance(obj, objects.Zombie)]
-    mask = self._world.mask(*chunk, 'grass')
-    available = mask.sum()
-    if available < 50:
-      target = min(len(zombies), 1)
-    else:
-      target = 1
-    if len(zombies) < target and random.uniform() < 0.1:
+    creatures = [obj for obj in objs if isinstance(obj, cls)]
+    mask = self._world.mask(*chunk, material)
+    target = target_fn(len(creatures), mask.sum())
+    if len(creatures) < target and random.uniform() < spawn_prob:
       xs = np.tile(np.arange(xmin, xmax)[:, None], [1, ymax - ymin])
       ys = np.tile(np.arange(ymin, ymax)[None, :], [xmax - xmin, 1])
       xs, ys = xs[mask], ys[mask]
       i = random.randint(0, len(xs))
       pos = np.array((xs[i], ys[i]))
       empty = self._world[pos][1] is None
-      away = self._player.distance(pos) > 6
+      away = self._player.distance(pos) >= player_dist
       if empty and away:
-        self._world.add(objects.Zombie(self._world, pos, self._player))
-    elif len(zombies) > target and random.uniform() < 0.1:
-      obj = zombies[random.randint(0, len(zombies))]
-      away = self._player.distance(obj.pos) > 6
+        self._world.add(ctor(pos))
+    elif len(creatures) > target and random.uniform() < despawn_prob:
+      obj = creatures[random.randint(0, len(creatures))]
+      away = self._player.distance(obj.pos) >= player_dist
       if away:
         self._world.remove(obj)

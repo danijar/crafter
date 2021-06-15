@@ -68,7 +68,7 @@ def _set_object(world, pos, player, tunnels):
   material, _ = world[x, y]
   if material not in constants.walkable:
     pass
-  elif dist > 3 and material == 'grass' and uniform() > 0.98:
+  elif dist > 3 and material == 'grass' and uniform() > 0.985:
     world.add(objects.Cow(world, (x, y)))
   elif dist > 6 and uniform() > 0.993:
     world.add(objects.Zombie(world, (x, y), player))
