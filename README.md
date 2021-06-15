@@ -47,7 +47,7 @@ crafter
 python3 -m crafter.run_gui
 ```
 
-![Crafter Video](https://github.com/danijar/crafter/raw/main/media/video.gif)
+![Crafter Video](https://i.imgur.com/S17T3W7.gif)
 
 The following optional command line flags are available:
 
