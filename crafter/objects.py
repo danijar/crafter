@@ -114,7 +114,8 @@ class Player(Object):
     elif action == 'do':
       self._do_material(target, material)
     elif action == 'sleep':
-      self.sleeping = True
+      if self.inventory['energy'] < constants.items['energy']['max']:
+        self.sleeping = True
     elif action.startswith('place_'):
       self._place(action[len('place_'):], target, material)
     elif action.startswith('make_'):
