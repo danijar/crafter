@@ -19,16 +19,15 @@ If you find this code useful, please reference in your paper:
 
 ## Highlights
 
-Crafter is a procedurally generated 2D world, where the agent finds food, and
-collect materials to build tools, which in turn unlock new materials, all while
-avoiding or defending against monsters.
+Crafter is a complex simulated environment that tests a variety of abilities of
+learning agents. It features an open-ended world with image inputs where the
+player discovers resources and tools, all while ensuring its own survival.
 
 - **Generalization:** New procedurally generated map for each episode.
 - **Exploration:** Materials unlock new tools which in turn unlock new materials.
-- **Memory:** Input images show small part of the world centered at the agent.
-- **Survival:** Must find food and avoid or defend against creatures.
-- **Reproducible:** All randomness is controlled by a single seed.
-- **Easy to use:** Image inputs and flat categorical action space.
+- **Partial observability:** Each input image reveals only a small part of the world.
+- **Survival:** Must find food and water, rest, and defend against monsters.
+- **Easy to use:** Pure Python, image inputs, flat categorical actions.
 
 ## Play Yourself
 
@@ -53,12 +52,11 @@ The following optional command line flags are available:
 
 | Flag | Default | Description |
 | :--- | :-----: | :---------- |
-| `--window <width> <height>` | 1280 720 | Window size in pixels, used as width and height. |
-| `--fps <integer>` | 5 | How many times to update the environment per second. |
 | `--record <filename>.mp4` | None | Record a video of the trajectory. |
-| `--area <width> <height>` | 64 64 | The size of the world in cells. |
-| `--view <width> <height>` | 23 13 | The layout size in cells; determines view distance. |
-| `--length <integer>` | None | Time limit for the episode. |
+| `--window <width> <height>` | 600 600 | Window size in pixels. |
+| `--area <width> <height>` | 64 64 | The number of grid cells of the generated world. |
+| `--view <width> <height>` | 9 9 | The number of grid cells that are visible in the images. |
+| `--size <width> <height>` | 0 0 | Render resolution; defaults to the window size. Setting this to `64 64` shows the low resolution graphics that artificial agents see. |
 | `--seed <integer>` | None | Determines world generation and creatures. |
 
 ## Training Agents
@@ -86,9 +84,9 @@ while not done:
 
 ### Constructor
 
-For comparability between papers, we recommend using the environment in its
-default configuration. Nonetheless, the environment can be configured via its
-constructor:
+To ensure comparability across research papers, we recommend using the
+environment in its default configuration. Nonetheless, the environment can be
+configured via its constructor:
 
 ```py
 crafter.Env(area=(64, 64), view=(9, 9), size=(64, 64), length=10000, seed=None)
@@ -100,7 +98,6 @@ crafter.Env(area=(64, 64), view=(9, 9), size=(64, 64), length=10000, seed=None)
 | `view` | `(9, 9)` | Layout size in cells; determines view distance. |
 | `size` | `(64, 64)` | Render size of the images in pixels. |
 | `length` | `10000` | Time limit for the episode, can be `None`. |
-| `health` | `5` | Initial health level of the player. |
 | `seed` | None | Interger that determines world generation and creatures. |
 
 ### Reward
@@ -114,25 +111,29 @@ achievements are as follows:
 
 - `collect_coal`
 - `collect_diamond`
+- `collect_drink`
 - `collect_iron`
+- `collect_sapling`
 - `collect_stone`
-- `collect_tree`
-- `defeat_zombie`
+- `collect_wood`
 - `defeat_skeleton`
-- `find_food`
+- `defeat_zombie`
+- `eat_cow`
+- `eat_plant`
 - `make_iron_pickaxe`
-- `make_stone_pickaxe`
-- `make_wood_pickaxe`
 - `make_iron_sword`
+- `make_stone_pickaxe`
 - `make_stone_sword`
+- `make_wood_pickaxe`
 - `make_wood_sword`
 - `place_furnace`
+- `place_plant`
 - `place_stone`
 - `place_table`
 
 The sum of rewards per episode can range from -0.5 (losing all health without
-any achievements) to 17 (unlocking all achievements and keeping or restoring
-all health).
+any achievements) to 21 (unlocking all achievements and keeping or restoring
+all health until the time limit is reached).
 
 ### Termination
 
@@ -142,7 +143,7 @@ also end when reaching a time limit, which is 10000 steps by default.
 ### Observation Space
 
 Each observation is an RGB image that shows a local view of the world around
-the player, as well as the health counter and inventory state of the agent.
+the player, as well as the life statistics and inventory state of the agent.
 
 ### Action Space
 
@@ -157,15 +158,17 @@ one of the possible actions:
 | 3 | `move_up` | Flat ground above the agent. |
 | 4 | `move_down` | Flat ground below the agent. |
 | 5 | `do` | Facing creature or material and have necessary tool. |
-| 6 | `place_stone` | Stone in inventory. |
-| 7 | `place_table` | Wood in inventory. |
-| 8 | `place_furnace` | Stone in inventory. |
-| 9 | `make_wood_pickaxe` | Nearby table. Wood in inventory. |
-| 10 | `make_stone_pickaxe` | Nearby table. Wood, stone in inventory. |
-| 11 | `make_iron_pickaxe` | Nearby table, furnace. Wood, coal, iron an inventory. |
-| 12 | `make_wood_sword` | Nearby table. Wood in inventory. |
-| 13 | `make_stone_sword` | Nearby table. Wood, stone in inventory. |
-| 14 | `make_iron_sword` | Nearby table, furnace. Wood, coal, iron an inventory. |
+| 6 | `sleep` | Energy level is below maximum. |
+| 7 | `place_stone` | Stone in inventory. |
+| 8 | `place_table` | Wood in inventory. |
+| 9 | `place_furnace` | Stone in inventory. |
+| 10 | `place_plant` | Sapling in inventory. |
+| 11 | `make_wood_pickaxe` | Nearby table. Wood in inventory. |
+| 12 | `make_stone_pickaxe` | Nearby table. Wood, stone in inventory. |
+| 13 | `make_iron_pickaxe` | Nearby table, furnace. Wood, coal, iron an inventory. |
+| 14 | `make_wood_sword` | Nearby table. Wood in inventory. |
+| 15 | `make_stone_sword` | Nearby table. Wood, stone in inventory. |
+| 16 | `make_iron_sword` | Nearby table, furnace. Wood, coal, iron an inventory. |
 
 ### Info Dictionary
 

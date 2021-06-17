@@ -19,7 +19,7 @@ def main():
   parser.add_argument('--view', type=int, nargs=2, default=(9, 9))
   parser.add_argument('--length', type=int, default=None)
   parser.add_argument('--health', type=int, default=5)
-  parser.add_argument('--window', type=int, nargs=2, default=(600, 606))
+  parser.add_argument('--window', type=int, nargs=2, default=(600, 600))
   parser.add_argument('--size', type=int, nargs=2, default=(0, 0))
   parser.add_argument('--record', type=str, default=None)
   parser.add_argument('--fps', type=int, default=5)
