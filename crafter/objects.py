@@ -398,7 +398,7 @@ class Plant(Object):
 
   @property
   def ripe(self):
-    return self.grown > 150
+    return self.grown > 300
 
   def update(self):
     self.grown += 1
