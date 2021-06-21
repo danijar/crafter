@@ -284,7 +284,7 @@ class Zombie(Object):
     super().__init__(world, pos)
     self.player = player
     self.health = 5
-    self.near = False
+    self.cooldown = 0
 
   @property
   def texture(self):
@@ -294,20 +294,20 @@ class Zombie(Object):
     if self.health <= 0:
       self.world.remove(self)
     dist = self.distance(self.player)
-    if dist <= 1:
-      if not self.near:
-        self.near = True
-      elif self.random.uniform() > 0.7:
-        damage = 1
-        if self.player.sleeping:
-          damage = self.player.health
-        self.player.health -= damage
-    else:
-      self.near = False
-    if dist <= 8 and self.random.uniform() < 0.8:
-      self.move(self.toward(self.player, self.random.uniform() < 0.7))
+    if dist <= 8 and self.random.uniform() < 0.9:
+      self.move(self.toward(self.player, self.random.uniform() < 0.8))
     else:
       self.move(self.random_dir())
+    dist = self.distance(self.player)
+    if dist <= 1:
+      if self.cooldown:
+        self.cooldown -= 1
+      else:
+        if self.player.sleeping:
+          self.player.health = 0
+        else:
+          self.player.health -= 1
+        self.cooldown = 5
 
 
 class Skeleton(Object):
