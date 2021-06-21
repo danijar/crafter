@@ -35,7 +35,7 @@ def main():
     action = random.randint(0, env.action_space.n)
     obs, _, done, _ = env.step(action)
     if args.record:
-      frames.append(obs['image'])
+      frames.append(obs)
   duration = time.time() - start
   step = env._step
   print(f'Step time: {1000*duration/step:.2f}ms ({int(step/duration)} FPS)')

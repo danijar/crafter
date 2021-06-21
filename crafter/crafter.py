@@ -15,6 +15,7 @@ class Env:
     size = np.array(size if hasattr(size, '__len__') else (size, size))
     unit = size // view
     self._area = area
+    self._view = view
     self._size = size
     self._length = length
     self._seed = seed
@@ -61,9 +62,13 @@ class Env:
     self._step += 1
     self._player.action = constants.actions[action]
     for obj in self._world.objects:
-      obj.update()
+      if self._player.distance(obj) < 2 * max(self._view):
+        obj.update()
     if self._step % 10 == 0:
       for chunk, objs in self._world.chunks.items():
+        # xmin, xmax, ymin, ymax = chunk
+        # center = (xmax - xmin) // 2, (ymax - ymin) // 2
+        # if self._player.distance(center) < 4 * max(self._view):
         self._balance_chunk(chunk, objs)
     obs = self._obs()
     reward = 0.0
