@@ -131,21 +131,21 @@ class Player(Object):
 
   def _update_life_stats(self):
     self._hunger += 0.5 if self.sleeping else 1
-    if self._hunger > 50:
+    if self._hunger > 25:
       self._hunger = 0
       self.inventory['food'] -= 1
     self._thirst += 0.5 if self.sleeping else 1
-    if self._thirst > 40:
+    if self._thirst > 20:
       self._thirst = 0
       self.inventory['drink'] -= 1
     if self.sleeping:
       self._fatigue = min(self._fatigue - 1, 0)
     else:
       self._fatigue += 1
-    if self._fatigue < -20:
+    if self._fatigue < -10:
       self._fatigue = 0
       self.inventory['energy'] += 1
-    if self._fatigue > 60:
+    if self._fatigue > 30:
       self._fatigue = 0
       self.inventory['energy'] -= 1
 
@@ -158,10 +158,10 @@ class Player(Object):
       self._recover += 2 if self.sleeping else 1
     else:
       self._recover -= 0.5 if self.sleeping else 1
-    if self._recover > 50:
+    if self._recover > 25:
       self._recover = 0
       self.health += 1
-    if self._recover < -30:
+    if self._recover < -15:
       self._recover = 0
       self.health -= 1
 
@@ -187,7 +187,7 @@ class Player(Object):
     if isinstance(obj, Plant):
       if obj.ripe:
         obj.grown = 0
-        self.inventory['food'] += 2
+        self.inventory['food'] += 4
         self.achievements['eat_plant'] += 1
     if isinstance(obj, Fence):
       self.world.remove(obj)
@@ -204,7 +204,7 @@ class Player(Object):
     if isinstance(obj, Cow):
       obj.health -= damage
       if obj.health <= 0:
-        self.inventory['food'] += 3
+        self.inventory['food'] += 6
         self.achievements['eat_cow'] += 1
         # TODO: Keep track of previous inventory state to do this in a more
         # general way.
@@ -304,9 +304,10 @@ class Zombie(Object):
         self.cooldown -= 1
       else:
         if self.player.sleeping:
-          self.player.health = 0
+          damage = max(2, self.player.health - 2)
         else:
-          self.player.health -= 1
+          damage = 2
+        self.player.health -= damage
         self.cooldown = 5
 
 
@@ -372,7 +373,7 @@ class Arrow(Object):
     target = self.pos + self.facing
     material, obj = self.world[target]
     if obj:
-      obj.health -= 1
+      obj.health -= 2
       self.world.remove(self)
     elif material not in self.walkable:
       self.world.remove(self)

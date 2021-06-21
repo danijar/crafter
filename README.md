@@ -131,9 +131,10 @@ achievements are as follows:
 - `place_stone`
 - `place_table`
 
-The sum of rewards per episode can range from -0.5 (losing all health without
+The sum of rewards per episode can range from -0.9 (losing all health without
 any achievements) to 21 (unlocking all achievements and keeping or restoring
-all health until the time limit is reached).
+all health until the time limit is reached). A score of 20.1 or higher means
+that all achievements have been unlocked.
 
 ### Termination
 
@@ -178,7 +179,6 @@ should not be provided to the agent. The following entries are available:
 
 | Key | Type | Description |
 | :-- | :--: | :---------- |
-| `health` | uint8 | Health counter of the player. |
 | `inventory` | dict | Mapping from item names to inventory counts. |
 | `achievements` | dict | Mapping from achievement names to their counts. |
 | `discount` | float | 1 during the episode and 0 at the last step. |
