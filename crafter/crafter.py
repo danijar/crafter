@@ -51,6 +51,7 @@ class Env:
     self._episode += 1
     self._step = 0
     self._world.reset(seed=hash((self._seed, self._episode)) % 2 ** 32)
+    self._update_time()
     self._player = objects.Player(self._world, center)
     self._last_health = self._player.health
     self._world.add(self._player)
@@ -60,6 +61,7 @@ class Env:
 
   def step(self, action):
     self._step += 1
+    self._update_time()
     self._player.action = constants.actions[action]
     for obj in self._world.objects:
       if self._player.distance(obj) < 2 * max(self._view):
@@ -102,40 +104,48 @@ class Env:
   def _obs(self):
     return self.render()
 
+  def _update_time(self):
+    # https://www.desmos.com/calculator/wt3tj8aiir
+    progress = (self._step / 250) % 1 + 0.3
+    daylight = 1 - ((np.cos(2 * np.pi * progress) + 1) / 2) ** 2
+    self._world.daylight = daylight
+
   def _balance_chunk(self, chunk, objs):
+    light = self._world.daylight
     self._balance_object(
-        chunk, objs, objects.Zombie, 'grass', 7, 0.1, 0.1,
+        chunk, objs, objects.Zombie, 'grass', 6, 0, 0.2, 0.4,
         lambda pos: objects.Zombie(self._world, pos, self._player),
-        lambda num, space: min(num, 1) if space < 50 else 1)
+        lambda num, space: (
+            0 if space < 50 else 2.5 - 2 * light, 2.5 - 2 * light))
     self._balance_object(
-        chunk, objs, objects.Skeleton, 'path', 7, 0.1, 0.1,
+        chunk, objs, objects.Skeleton, 'path', 7, 7, 0.1, 0.1,
         lambda pos: objects.Skeleton(self._world, pos, self._player),
-        lambda num, space: min(num, 1) if space < 6 else min(max(1, num), 2))
+        lambda num, space: (0 if space < 6 else 1, 2))
     self._balance_object(
-        chunk, objs, objects.Cow, 'grass', 5, 0.01, 0.1,
+        chunk, objs, objects.Cow, 'grass', 5, 5, 0.01, 0.1,
         lambda pos: objects.Cow(self._world, pos),
-        lambda num, space: min(num, 1) if space < 30 else 2)
+        lambda num, space: (0 if space < 30 else 1, 2))
 
   def _balance_object(
-      self, chunk, objs, cls, material, player_dist,
+      self, chunk, objs, cls, material, span_dist, despan_dist,
       spawn_prob, despawn_prob, ctor, target_fn):
     xmin, xmax, ymin, ymax = chunk
     random = self._world.random
     creatures = [obj for obj in objs if isinstance(obj, cls)]
     mask = self._world.mask(*chunk, material)
-    target = target_fn(len(creatures), mask.sum())
-    if len(creatures) < target and random.uniform() < spawn_prob:
+    target_min, target_max = target_fn(len(creatures), mask.sum())
+    if len(creatures) < int(target_min) and random.uniform() < spawn_prob:
       xs = np.tile(np.arange(xmin, xmax)[:, None], [1, ymax - ymin])
       ys = np.tile(np.arange(ymin, ymax)[None, :], [xmax - xmin, 1])
       xs, ys = xs[mask], ys[mask]
       i = random.randint(0, len(xs))
       pos = np.array((xs[i], ys[i]))
       empty = self._world[pos][1] is None
-      away = self._player.distance(pos) >= player_dist
+      away = self._player.distance(pos) >= span_dist
       if empty and away:
         self._world.add(ctor(pos))
-    elif len(creatures) > target and random.uniform() < despawn_prob:
+    elif len(creatures) > int(target_max) and random.uniform() < despawn_prob:
       obj = creatures[random.randint(0, len(creatures))]
-      away = self._player.distance(obj.pos) >= player_dist
+      away = self._player.distance(obj.pos) >= despan_dist
       if away:
         self._world.remove(obj)

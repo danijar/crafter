@@ -3,7 +3,7 @@ import pathlib
 
 import imageio
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageEnhance
 
 
 DiscreteSpace = collections.namedtuple('DiscreteSpace', 'n')
@@ -36,6 +36,7 @@ class World:
 
   def reset(self, seed=None):
     self.random = np.random.RandomState(seed)
+    self.daylight = 0.0
     self._chunks = collections.defaultdict(set)
     self._objects = [None]
     self._mat_map = np.zeros(self.area, np.uint8)
@@ -185,9 +186,21 @@ class LocalView:
       texture = self._textures.get(obj.texture, self._unit)
       _draw_alpha(canvas, pos * self._unit, texture)
     if player.sleeping:
-      canvas = self._tint(canvas, (32, 0, 64), 0.5)
+      canvas = self._sleep(canvas)
+    else:
+      canvas = self._light(canvas, self._world.daylight)
     # if player.health < 1:
     #   canvas = self._tint(canvas, (128, 0, 0), 0.6)
+    return canvas
+
+  def _light(self, canvas, daylight):
+    desat = np.array(ImageEnhance.Color(Image.fromarray(canvas)).enhance(0.4))
+    night = self._tint(desat, (0, 16, 64), 0.5)
+    return daylight * canvas + (1 - daylight) * night
+
+  def _sleep(self, canvas):
+    canvas = np.array(ImageEnhance.Color(Image.fromarray(canvas)).enhance(0.0))
+    canvas = self._tint(canvas, (0, 0, 16), 0.5)
     return canvas
 
   def _tint(self, canvas, color, amount):
