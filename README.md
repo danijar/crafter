@@ -19,15 +19,17 @@ If you find this code useful, please reference in your paper:
 
 ## Highlights
 
-Crafter is a complex simulated environment that tests a variety of abilities of
-learning agents. It features an open-ended world with image inputs where the
-player discovers resources and tools, all while ensuring its own survival.
+Crafter is a simulated environment that tests a variety of general abilities of
+learning agents. It features a randomized open-ended world with image inputs
+where the player discovers resources and tools, all while ensuring its own
+survival.
 
 - **Generalization:** New procedurally generated map for each episode.
 - **Exploration:** Materials unlock new tools which in turn unlock new materials.
+- **Long dependencies:** Gathering resources, building shelter, growing fruits.
 - **Partial observability:** Each input image reveals only a small part of the world.
-- **Survival:** Must find food and water, rest, and defend against monsters.
-- **Easy to use:** Pure Python, image inputs, flat categorical actions.
+- **Survival:** Must find food and water, shelter to rest, defend against monsters.
+- **Easy to use:** Pure Python, few dependencies, flat categorical actions.
 
 ## Play Yourself
 
