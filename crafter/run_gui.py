@@ -113,7 +113,10 @@ def main():
         running = False
       if args.death == 'reset':
         env.reset()
+        achievements = set()
         was_done = False
+        duration = 0
+        return_ = 0
       if args.death == 'continue':
         pass
     if messages:

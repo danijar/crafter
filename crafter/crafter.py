@@ -105,18 +105,18 @@ class Env:
     return self.render()
 
   def _update_time(self):
-    # https://www.desmos.com/calculator/wt3tj8aiir
-    progress = (self._step / 250) % 1 + 0.3
-    daylight = 1 - ((np.cos(2 * np.pi * progress) + 1) / 2) ** 2
+    # https://www.desmos.com/calculator/grfbc6rs3h
+    progress = (self._step / 300) % 1 + 0.3
+    daylight = 1 - np.abs(np.cos(np.pi * progress)) ** 3
     self._world.daylight = daylight
 
   def _balance_chunk(self, chunk, objs):
     light = self._world.daylight
     self._balance_object(
-        chunk, objs, objects.Zombie, 'grass', 6, 0, 0.2, 0.4,
+        chunk, objs, objects.Zombie, 'grass', 6, 0, 0.3, 0.4,
         lambda pos: objects.Zombie(self._world, pos, self._player),
         lambda num, space: (
-            0 if space < 50 else 2.5 - 2 * light, 2.5 - 2 * light))
+            0 if space < 50 else 3.5 - 3 * light, 3.5 - 3 * light))
     self._balance_object(
         chunk, objs, objects.Skeleton, 'path', 7, 7, 0.1, 0.1,
         lambda pos: objects.Skeleton(self._world, pos, self._player),
@@ -124,7 +124,7 @@ class Env:
     self._balance_object(
         chunk, objs, objects.Cow, 'grass', 5, 5, 0.01, 0.1,
         lambda pos: objects.Cow(self._world, pos),
-        lambda num, space: (0 if space < 30 else 1, 2))
+        lambda num, space: (0 if space < 30 else 1, 1.5 + light))
 
   def _balance_object(
       self, chunk, objs, cls, material, span_dist, despan_dist,

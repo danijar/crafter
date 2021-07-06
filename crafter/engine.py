@@ -1,4 +1,5 @@
 import collections
+import functools
 import pathlib
 
 import imageio
@@ -185,27 +186,43 @@ class LocalView:
         continue
       texture = self._textures.get(obj.texture, self._unit)
       _draw_alpha(canvas, pos * self._unit, texture)
+    canvas = self._light(canvas, self._world.daylight)
     if player.sleeping:
       canvas = self._sleep(canvas)
-    else:
-      canvas = self._light(canvas, self._world.daylight)
     # if player.health < 1:
     #   canvas = self._tint(canvas, (128, 0, 0), 0.6)
     return canvas
 
   def _light(self, canvas, daylight):
-    desat = np.array(ImageEnhance.Color(Image.fromarray(canvas)).enhance(0.4))
-    night = self._tint(desat, (0, 16, 64), 0.5)
+    night = canvas
+    if daylight < 0.5:
+      night = self._noise(night, 2 * (0.5 - daylight), 0.5)
+    night = np.array(ImageEnhance.Color(
+        Image.fromarray(night.astype(np.uint8))).enhance(0.4))
+    night = self._tint(night, (0, 16, 64), 0.5)
     return daylight * canvas + (1 - daylight) * night
 
   def _sleep(self, canvas):
-    canvas = np.array(ImageEnhance.Color(Image.fromarray(canvas)).enhance(0.0))
+    canvas = np.array(ImageEnhance.Color(
+        Image.fromarray(canvas.astype(np.uint8))).enhance(0.0))
     canvas = self._tint(canvas, (0, 0, 16), 0.5)
     return canvas
 
   def _tint(self, canvas, color, amount):
     color = np.array(color)
     return (1 - amount) * canvas + amount * color
+
+  def _noise(self, canvas, amount, stddev):
+    noise = self._world.random.uniform(32, 127, canvas.shape[:2])[..., None]
+    mask = amount * self._vignette(canvas.shape, stddev)[..., None]
+    return (1 - mask) * canvas + mask * noise
+
+  @functools.cache
+  def _vignette(self, shape, stddev):
+    xs, ys = np.meshgrid(
+        np.linspace(-1, 1, shape[0]),
+        np.linspace(-1, 1, shape[1]))
+    return 1 - np.exp(-0.5 * (xs ** 2 + ys ** 2) / (stddev ** 2)).T
 
 
 class ItemView:
