@@ -217,7 +217,7 @@ class LocalView:
     mask = amount * self._vignette(canvas.shape, stddev)[..., None]
     return (1 - mask) * canvas + mask * noise
 
-  @functools.cache
+  @functools.lru_cache(10)
   def _vignette(self, shape, stddev):
     xs, ys = np.meshgrid(
         np.linspace(-1, 1, shape[0]),
