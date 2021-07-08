@@ -13,6 +13,7 @@ import crafter
 
 
 def main():
+  boolean = lambda x: bool(['False', 'True'].index(x))
   parser = argparse.ArgumentParser()
   parser.add_argument('--seed', type=int, default=None)
   parser.add_argument('--area', nargs=2, type=int, default=(64, 64))
@@ -23,6 +24,7 @@ def main():
   parser.add_argument('--size', type=int, nargs=2, default=(0, 0))
   parser.add_argument('--record', type=str, default=None)
   parser.add_argument('--fps', type=int, default=5)
+  parser.add_argument('--wait', type=boolean, default=False)
   parser.add_argument('--death', type=str, default='reset', choices=[
       'continue', 'reset', 'quit'])
   args = parser.parse_args()
@@ -59,7 +61,7 @@ def main():
   size[1] = size[1] or args.window[1]
 
   env = crafter.Env(args.area, args.view, size, args.length, args.seed)
-  env.reset()
+  obs = env.reset()
   achievements = set()
   duration = 0
   return_ = 0
@@ -73,6 +75,18 @@ def main():
   clock = pygame.time.Clock()
   running = True
   while running:
+
+    duration += 1
+    if args.record:
+      frames.append(obs)
+    if size != args.window:
+      obs = Image.fromarray(obs)
+      obs = obs.resize(args.window, resample=Image.NEAREST)
+      obs = np.array(obs)
+    surface = pygame.surfarray.make_surface(obs.transpose((1, 0, 2)))
+    screen.blit(surface, (0, 0))
+    pygame.display.flip()
+    clock.tick(args.fps)
 
     action = None
     pygame.event.pump()
@@ -89,11 +103,14 @@ def main():
         if pressed[key]:
           break
       else:
-        action = 'noop'
+        if args.wait:
+          continue
+        else:
+          action = 'noop'
 
-    messages = []
     obs, reward, done, _ = env.step(env.action_names.index(action))
 
+    messages = []
     unlocked = {
         name for name, count in env._player.achievements.items()
         if count > 0 and name not in achievements}
@@ -121,18 +138,6 @@ def main():
         pass
     if messages:
       print('\n'.join(messages), sep='')
-
-    duration += 1
-    if args.record:
-      frames.append(obs)
-    if size != args.window:
-      obs = Image.fromarray(obs)
-      obs = obs.resize(args.window, resample=Image.NEAREST)
-      obs = np.array(obs)
-    surface = pygame.surfarray.make_surface(obs.transpose((1, 0, 2)))
-    screen.blit(surface, (0, 0))
-    pygame.display.flip()
-    clock.tick(args.fps)
 
   pygame.quit()
   print('Duration:', duration)
