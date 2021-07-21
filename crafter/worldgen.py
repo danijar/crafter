@@ -44,9 +44,9 @@ def _set_material(world, pos, player, tunnels, simplex):
       world[x, y] = 'coal'
     elif simplex(x, y, 2, 6) > 0.4 and uniform() > 0.75:
       world[x, y] = 'iron'
-    elif mountain > 0.18 and uniform() > 0.995:
+    elif mountain > 0.18 and uniform() > 0.994:
       world[x, y] = 'diamond'
-    elif mountain > 0.3 and simplex(x, y, 6, 5) > 0.4:
+    elif mountain > 0.3 and simplex(x, y, 6, 5) > 0.35:
       world[x, y] = 'lava'
     else:
       world[x, y] = 'stone'

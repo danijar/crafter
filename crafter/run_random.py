@@ -28,6 +28,9 @@ def main():
   start = time.time()
   env.reset()
   print(f'Reset time: {1000*(time.time()-start):.2f}ms')
+  print('Coal exist:    ', env._world.count('coal'))
+  print('Iron exist:    ', env._world.count('iron'))
+  print('Diamonds exist:', env._world.count('diamond'))
 
   start = time.time()
   done = False

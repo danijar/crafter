@@ -13,6 +13,7 @@ class Env:
       seed=None):
     view = np.array(view if hasattr(view, '__len__') else (view, view))
     size = np.array(size if hasattr(size, '__len__') else (size, size))
+    seed = np.random.randint(0, 2**32 - 1) if seed is None else seed
     unit = size // view
     self._area = area
     self._view = view

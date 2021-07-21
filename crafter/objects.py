@@ -105,6 +105,7 @@ class Player(Object):
         action = 'sleep'
       else:
         self.sleeping = False
+        self.achievements['wake_up'] += 1
     if action == 'noop':
       pass
     elif action.startswith('move_'):
@@ -304,7 +305,7 @@ class Zombie(Object):
         self.cooldown -= 1
       else:
         if self.player.sleeping:
-          damage = max(2, self.player.health - 2)
+          damage = 7
         else:
           damage = 2
         self.player.health -= damage

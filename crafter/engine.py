@@ -112,8 +112,6 @@ class World:
     return (region == self._mat_ids[material])
 
   def count(self, material):
-    if material not in self._mat_ids:
-      return 0
     return (self._mat_map == self._mat_ids[material]).sum()
 
   def chunk_key(self, pos):
