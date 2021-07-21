@@ -132,10 +132,11 @@ achievements are as follows:
 - `place_plant`
 - `place_stone`
 - `place_table`
+- `wake_up`
 
 The sum of rewards per episode can range from -0.9 (losing all health without
-any achievements) to 21 (unlocking all achievements and keeping or restoring
-all health until the time limit is reached). A score of 20.1 or higher means
+any achievements) to 22 (unlocking all achievements and keeping or restoring
+all health until the time limit is reached). A score of 21.1 or higher means
 that all achievements have been unlocked.
 
 ### Termination
