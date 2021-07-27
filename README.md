@@ -188,16 +188,19 @@ should not be provided to the agent. The following entries are available:
 
 ## Baselines
 
-To understand how challenging the environment is, we trained the
-[DreamerV2][dreamerv2] agent 10 times for 30M environment steps each. The agent
-receives the rewards that correspond to the 13 achievements that can be
-unlocked in each episode, the most difficult of which is to collect a diamond.
+Crafter is designed to be challenging for current learning algorithms but not
+completely out of reach. To verify how challenging the environment is, we
+trained the [DreamerV2][dreamerv2] agent on Crafter with rewards. We recommend
+training for 5M environment steps and reporting the mean score. During this
+time, the agent makes consistent learning progress.
 
-![Crafter Terrain](https://github.com/danijar/crafter/raw/main/media/dreamerv2.png)
+<img src="https://github.com/danijar/crafter/raw/main/media/baseline.png" width="500"/>
 
-We observe consistent learning progress. Eventually, many of the runs
-sporadically collect a diamond. This shows that the environment is challenging
-and unsolved but not completely out of reach.
+When training over 10 times longer, the agent also rarely unlocks all
+achievements during an episode, including finding a diamond. The open research
+challenge ahead of us is to drastically accelerate the exploration and learning
+progress and increase the average score by consistently unlocking all
+achievements.
 
 [dreamerv2]: https://github.com/danijar/dreamerv2
 
