@@ -54,7 +54,7 @@ The following optional command line flags are available:
 
 | Flag | Default | Description |
 | :--- | :-----: | :---------- |
-| `--record <filename>.mp4` | None | Record a video of the trajectory. |
+| `--record <directory>` | None | Directory for recording trajectories. |
 | `--window <width> <height>` | 600 600 | Window size in pixels. |
 | `--area <width> <height>` | 64 64 | The number of grid cells of the generated world. |
 | `--view <width> <height>` | 9 9 | The number of grid cells that are visible in the images. |
@@ -185,6 +185,8 @@ should not be provided to the agent. The following entries are available:
 | `inventory` | dict | Mapping from item names to inventory counts. |
 | `achievements` | dict | Mapping from achievement names to their counts. |
 | `discount` | float | 1 during the episode and 0 at the last step. |
+| `semantic` | np.array | Categorical representation of the world. |
+| `player_pos` | tuple | X and Y position of the player in the world. |
 
 ## Baselines
 

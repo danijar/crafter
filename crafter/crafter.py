@@ -29,6 +29,9 @@ class Env:
         [view[0], view[1] - item_rows])
     self._item_view = engine.ItemView(
         self._textures, unit, [view[0], item_rows])
+    self._sem_view = engine.SemanticView(self._world, [
+        objects.Player, objects.Cow, objects.Zombie,
+        objects.Skeleton, objects.Arrow, objects.Plant])
     self._border = (size - unit * view) // 2
     self._step = None
     self._player = None
@@ -89,6 +92,8 @@ class Env:
         'inventory': self._player.inventory.copy(),
         'achievements': self._player.achievements.copy(),
         'discount': 1 - float(dead),
+        'semantic': self._sem_view(),
+        'player_pos': self._player.pos,
     }
     return obs, reward, done, info
 

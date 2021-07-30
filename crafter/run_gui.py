@@ -67,7 +67,8 @@ def main():
   return_ = 0
   was_done = False
   if args.record:
-    frames = []
+    recorder = crafter.Recorder()
+    recorder.reset(obs)
   print('Diamonds exist:', env._world.count('diamond'))
 
   pygame.init()
@@ -76,9 +77,8 @@ def main():
   running = True
   while running:
 
+    # Rendering.
     duration += 1
-    if args.record:
-      frames.append(obs)
     if size != args.window:
       obs = Image.fromarray(obs)
       obs = obs.resize(args.window, resample=Image.NEAREST)
@@ -88,6 +88,7 @@ def main():
     pygame.display.flip()
     clock.tick(args.fps)
 
+    # Keyboard input.
     action = None
     pygame.event.pump()
     for event in pygame.event.get():
@@ -108,43 +109,47 @@ def main():
         else:
           action = 'noop'
 
-    obs, reward, done, _ = env.step(env.action_names.index(action))
+    # Environment step.
+    obs, reward, done, info = env.step(env.action_names.index(action))
+    if args.record:
+      recorder.step(action, obs, reward, done, info)
 
-    messages = []
+    # Achievements.
     unlocked = {
         name for name, count in env._player.achievements.items()
         if count > 0 and name not in achievements}
     for name in unlocked:
       achievements |= unlocked
       total = len(env._player.achievements.keys())
-      messages.append(f'Achievement ({len(achievements)}/{total}): {name}')
+      print(f'Achievement ({len(achievements)}/{total}): {name}')
     if env._step > 0 and env._step % 100 == 0:
-      messages.append(f'Time step: {env._step}')
+      print(f'Time step: {env._step}')
     if reward:
-      messages.append(f'Reward: {reward}')
+      print(f'Reward: {reward}')
       return_ += reward
+
+    # Episode end.
     if done and not was_done:
       was_done = True
-      messages.append('Episode done!')
+      print('Episode done!')
+      print('Duration:', duration)
+      print('Return:', return_)
+      if args.record:
+        recorder.save(args.record)
       if args.death == 'quit':
         running = False
       if args.death == 'reset':
-        env.reset()
+        obs = env.reset()
+        if args.record:
+          recorder.reset(obs)
         achievements = set()
         was_done = False
         duration = 0
         return_ = 0
       if args.death == 'continue':
         pass
-    if messages:
-      print('\n'.join(messages), sep='')
 
   pygame.quit()
-  print('Duration:', duration)
-  print('Return:', return_)
-  if args.record:
-    imageio.mimsave(args.record, frames)
-    print('Saved', args.record)
 
 
 if __name__ == '__main__':

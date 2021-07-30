@@ -271,3 +271,19 @@ def _draw_alpha(canvas, pos, texture):
     blended = alpha * texture + (1 - alpha) * current
     texture = (255 * blended).astype(np.uint8)
   canvas[x: x + w, y: y + h] = texture
+
+
+class SemanticView:
+
+  def __init__(self, world, obj_types):
+    self._world = world
+    self._mat_ids = world._mat_ids.copy()
+    self._obj_ids = {
+        c: len(self._mat_ids) + i
+        for i, c in enumerate(obj_types)}
+
+  def __call__(self):
+    canvas = self._world._mat_map.copy()
+    for obj in self._world.objects:
+      canvas[tuple(obj.pos)] = self._obj_ids[type(obj)]
+    return canvas
