@@ -29,7 +29,14 @@ survival.
 - **Long dependencies:** Gathering resources, building shelter, growing fruits.
 - **Partial observability:** Each input image reveals only a small part of the world.
 - **Survival:** Must find food and water, shelter to rest, defend against monsters.
-- **Easy to use:** Pure Python, few dependencies, flat categorical actions.
+- **Easy to use:** Pure Python, windowless rendering, few dependencies, flat action space.
+
+## Status
+
+Crafter has been released in its stable version v1.x.x and can now be used for
+research projects. The environment will not change anymore to ensure
+comparability. Future changes may add additional debugging features that do not
+affect the environment itself.
 
 ## Play Yourself
 
@@ -39,7 +46,8 @@ to the terminal.
 
 ```sh
 # Install with GUI
-pip3 install 'crafter[gui]'
+pip3 install pygame
+pip3 install crafter
 
 # Start the game
 crafter
@@ -54,11 +62,12 @@ The following optional command line flags are available:
 
 | Flag | Default | Description |
 | :--- | :-----: | :---------- |
-| `--record <directory>` | None | Directory for recording trajectories. |
+| `--record <directory>` | None | Directory for recording trajectories in NPZ and MP4 formats. |
 | `--window <width> <height>` | 600 600 | Window size in pixels. |
 | `--area <width> <height>` | 64 64 | The number of grid cells of the generated world. |
 | `--view <width> <height>` | 9 9 | The number of grid cells that are visible in the images. |
 | `--size <width> <height>` | 0 0 | Render resolution; defaults to the window size. Setting this to `64 64` shows the low resolution graphics that artificial agents see. |
+| `--wait <boolean>` | False | Pauses the game while the player chooses their action. |
 | `--seed <integer>` | None | Determines world generation and creatures. |
 
 ## Training Agents

@@ -1,7 +1,6 @@
 import argparse
 
 import numpy as np
-import imageio
 try:
   import pygame
 except ImportError:
