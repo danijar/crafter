@@ -77,8 +77,6 @@ def main():
   while running:
 
     # Rendering.
-    duration += 1
-
     image = env.render(size)
     if size != args.window:
       image = Image.fromarray(image)
@@ -105,13 +103,14 @@ def main():
         if pressed[key]:
           break
       else:
-        if args.wait:
+        if args.wait and not env._player.sleeping:
           continue
         else:
           action = 'noop'
 
     # Environment step.
     _, reward, done, _ = env.step(env.action_names.index(action))
+    duration += 1
 
     # Achievements.
     unlocked = {
