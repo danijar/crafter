@@ -3,36 +3,56 @@ import pathlib
 
 import imageio
 import numpy as np
-from PIL import Image
 
 
 class Recorder:
 
-  def __init__(self):
+  def __init__(self, env, size=(512, 512)):
+    self._env = env
+    self._size = size
+    self._frames = []
     self._episode = None
 
-  def reset(self, obs):
+  def __getattr__(self, name):
+    if name.startswith('__'):
+      raise AttributeError(name)
+    try:
+      return getattr(self._env, name)
+    except AttributeError:
+      raise ValueError(name)
+
+  def reset(self):
     # The first time step only contains the initial image that the environment
     # returns on reset.
+    obs = self._env.reset()
+    self._frames = [self._env.render(self._size)]
     self._episode = [{'image': obs}]
+    return obs
 
-  def step(self, action, obs, reward, done, info):
+  def step(self, action):
     # Each time step contains the action and the quantities provided by the
     # environment in response to the action.
-    info = info.copy()
-    info.update({
+    obs, reward, done, info = self._env.step(action)
+    self._frames.append(self._env.render(self._size))
+    details = info.copy()
+    details.update({
         f'inventory_{k}': v for k, v
-        in info.pop('inventory').items()})
-    info.update({
+        in details.pop('inventory').items()})
+    details.update({
         f'achivement_{k}': v for k, v
-        in info.pop('achievements').items()})
+        in details.pop('achievements').items()})
     self._episode.append({
         'action': action,
         'image': obs,
         'reward': reward,
         'done': done,
-        **info,
+        **details,
     })
+    return obs, reward, done, info
+
+  @property
+  def last_frame(self):
+    return self._frames[-1]
 
   def episode(self):
     # Fill in keys for the first time step of the episode.
@@ -43,19 +63,12 @@ class Recorder:
         k: np.array([step[k] for step in self._episode])
         for k in self._episode[0]}
 
-  def video(self, size=(256, 256)):
-    frames = [step['image'] for step in self._episode]
-    frames = [
-        np.array(Image.fromarray(frame).resize(size, Image.NEAREST))
-        for frame in frames]
-    return frames
-
   def save(self, directory):
     directory = pathlib.Path(directory)
     directory.mkdir(exist_ok=True)
     timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
     path = str(directory / timestamp)
-    imageio.mimsave(path + '.mp4', self.video())
+    imageio.mimsave(path + '.mp4', self._frames)
     print('Saved', path + '.mp4')
     np.savez_compressed(path + '.npz', **self.episode())
     print('Saved', path + '.npz')

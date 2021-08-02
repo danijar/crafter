@@ -59,15 +59,15 @@ def main():
   size[0] = size[0] or args.window[0]
   size[1] = size[1] or args.window[1]
 
-  env = crafter.Env(args.area, args.view, size, args.length, args.seed)
-  obs = env.reset()
+  env = crafter.Env(
+      area=args.area, view=args.view, length=args.length, seed=args.seed)
+  if args.record:
+    env = crafter.Recorder(env)
+  env.reset()
   achievements = set()
   duration = 0
   return_ = 0
   was_done = False
-  if args.record:
-    recorder = crafter.Recorder()
-    recorder.reset(obs)
   print('Diamonds exist:', env._world.count('diamond'))
 
   pygame.init()
@@ -78,11 +78,13 @@ def main():
 
     # Rendering.
     duration += 1
+
+    image = env.render(size)
     if size != args.window:
-      obs = Image.fromarray(obs)
-      obs = obs.resize(args.window, resample=Image.NEAREST)
-      obs = np.array(obs)
-    surface = pygame.surfarray.make_surface(obs.transpose((1, 0, 2)))
+      image = Image.fromarray(image)
+      image = image.resize(args.window, resample=Image.NEAREST)
+      image = np.array(image)
+    surface = pygame.surfarray.make_surface(image.transpose((1, 0, 2)))
     screen.blit(surface, (0, 0))
     pygame.display.flip()
     clock.tick(args.fps)
@@ -109,9 +111,7 @@ def main():
           action = 'noop'
 
     # Environment step.
-    obs, reward, done, info = env.step(env.action_names.index(action))
-    if args.record:
-      recorder.step(action, obs, reward, done, info)
+    _, reward, done, _ = env.step(env.action_names.index(action))
 
     # Achievements.
     unlocked = {
@@ -133,14 +133,13 @@ def main():
       print('Episode done!')
       print('Duration:', duration)
       print('Return:', return_)
-      if args.record:
-        recorder.save(args.record)
       if args.death == 'quit':
         running = False
       if args.death == 'reset':
-        obs = env.reset()
         if args.record:
-          recorder.reset(obs)
+          env.save(args.record)
+        print('\nStarting a new episode.')
+        env.reset()
         achievements = set()
         was_done = False
         duration = 0

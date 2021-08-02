@@ -14,7 +14,6 @@ class Env:
     view = np.array(view if hasattr(view, '__len__') else (view, view))
     size = np.array(size if hasattr(size, '__len__') else (size, size))
     seed = np.random.randint(0, 2**32 - 1) if seed is None else seed
-    unit = size // view
     self._area = area
     self._view = view
     self._size = size
@@ -25,14 +24,12 @@ class Env:
     self._textures = engine.Textures(constants.root / 'assets')
     item_rows = int(np.ceil(len(constants.items) / view[0]))
     self._local_view = engine.LocalView(
-        self._world, self._textures, unit,
-        [view[0], view[1] - item_rows])
+        self._world, self._textures, [view[0], view[1] - item_rows])
     self._item_view = engine.ItemView(
-        self._textures, unit, [view[0], item_rows])
+        self._textures, [view[0], item_rows])
     self._sem_view = engine.SemanticView(self._world, [
         objects.Player, objects.Cow, objects.Zombie,
         objects.Skeleton, objects.Arrow, objects.Plant])
-    self._border = (size - unit * view) // 2
     self._step = None
     self._player = None
     self._last_health = None
@@ -97,13 +94,16 @@ class Env:
     }
     return obs, reward, done, info
 
-  def render(self):
-    canvas = np.zeros(tuple(self._size) + (3,), np.uint8)
-    local_view = self._local_view(self._player)
-    item_view = self._item_view(self._player.inventory)
+  def render(self, size=None):
+    size = size or self._size
+    unit = size // self._view
+    canvas = np.zeros(tuple(size) + (3,), np.uint8)
+    local_view = self._local_view(self._player, unit)
+    item_view = self._item_view(self._player.inventory, unit)
     view = local_view
     view = np.concatenate([local_view, item_view], 1)
-    (x, y), (w, h) = self._border, view.shape[:2]
+    border = (size - (size // self._view) * self._view) // 2
+    (x, y), (w, h) = border, view.shape[:2]
     canvas[x: x + w, y: y + h] = view
     return canvas.transpose((1, 0, 2))
 

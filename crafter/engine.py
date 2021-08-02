@@ -159,31 +159,31 @@ class UncoverView:
 
 class LocalView:
 
-  def __init__(self, world, textures, unit, grid):
+  def __init__(self, world, textures, grid):
     self._world = world
     self._textures = textures
-    self._unit = np.array(unit)
     self._grid = np.array(grid)
     self._offset = self._grid // 2
     self._area = np.array(self._world.area)
     self._center = None
 
-  def __call__(self, player):
+  def __call__(self, player, unit):
+    self._unit = np.array(unit)
     self._center = np.array(player.pos)
-    canvas = np.zeros(tuple(self._grid * self._unit) + (3,), np.uint8) + 127
+    canvas = np.zeros(tuple(self._grid * unit) + (3,), np.uint8) + 127
     for x in range(self._grid[0]):
       for y in range(self._grid[1]):
         pos = self._center + np.array([x, y]) - self._offset
         if not _inside((0, 0), pos, self._area):
           continue
-        texture = self._textures.get(self._world[pos][0], self._unit)
-        _draw(canvas, np.array([x, y]) * self._unit, texture)
+        texture = self._textures.get(self._world[pos][0], unit)
+        _draw(canvas, np.array([x, y]) * unit, texture)
     for obj in self._world.objects:
       pos = obj.pos - self._center + self._offset
       if not _inside((0, 0), pos, self._grid):
         continue
-      texture = self._textures.get(obj.texture, self._unit)
-      _draw_alpha(canvas, pos * self._unit, texture)
+      texture = self._textures.get(obj.texture, unit)
+      _draw_alpha(canvas, pos * unit, texture)
     canvas = self._light(canvas, self._world.daylight)
     if player.sleeping:
       canvas = self._sleep(canvas)
@@ -225,32 +225,48 @@ class LocalView:
 
 class ItemView:
 
-  def __init__(self, textures, unit, grid):
+  def __init__(self, textures, grid):
     self._textures = textures
-    self._unit = np.array(unit)
     self._grid = np.array(grid)
 
-  def __call__(self, inventory):
-    canvas = np.zeros(tuple(self._grid * self._unit) + (3,), np.uint8)
+  def __call__(self, inventory, unit):
+    unit = np.array(unit)
+    canvas = np.zeros(tuple(self._grid * unit) + (3,), np.uint8)
     for index, (item, amount) in enumerate(inventory.items()):
       if amount < 1:
         continue
-      self._item(canvas, index, item)
-      self._amount(canvas, index, amount)
+      self._item(canvas, index, item, unit)
+      self._amount(canvas, index, amount, unit)
     return canvas
 
-  def _item(self, canvas, index, item):
+  def _item(self, canvas, index, item, unit):
     pos = index % self._grid[0], index // self._grid[0]
-    pos = (pos * self._unit + 0.1 * self._unit).astype(np.int32)
-    texture = self._textures.get(item, 0.8 * self._unit)
+    pos = (pos * unit + 0.1 * unit).astype(np.int32)
+    texture = self._textures.get(item, 0.8 * unit)
     _draw_alpha(canvas, pos, texture)
 
-  def _amount(self, canvas, index, amount):
+  def _amount(self, canvas, index, amount, unit):
     pos = index % self._grid[0], index // self._grid[0]
-    pos = (pos * self._unit + 0.4 * self._unit).astype(np.int32)
+    pos = (pos * unit + 0.4 * unit).astype(np.int32)
     text = str(amount) if amount in list(range(10)) else 'unknown'
-    texture = self._textures.get(text, 0.6 * self._unit)
+    texture = self._textures.get(text, 0.6 * unit)
     _draw_alpha(canvas, pos, texture)
+
+
+class SemanticView:
+
+  def __init__(self, world, obj_types):
+    self._world = world
+    self._mat_ids = world._mat_ids.copy()
+    self._obj_ids = {
+        c: len(self._mat_ids) + i
+        for i, c in enumerate(obj_types)}
+
+  def __call__(self):
+    canvas = self._world._mat_map.copy()
+    for obj in self._world.objects:
+      canvas[tuple(obj.pos)] = self._obj_ids[type(obj)]
+    return canvas
 
 
 def _inside(lhs, mid, rhs):
@@ -271,19 +287,3 @@ def _draw_alpha(canvas, pos, texture):
     blended = alpha * texture + (1 - alpha) * current
     texture = (255 * blended).astype(np.uint8)
   canvas[x: x + w, y: y + h] = texture
-
-
-class SemanticView:
-
-  def __init__(self, world, obj_types):
-    self._world = world
-    self._mat_ids = world._mat_ids.copy()
-    self._obj_ids = {
-        c: len(self._mat_ids) + i
-        for i, c in enumerate(obj_types)}
-
-  def __call__(self):
-    canvas = self._world._mat_map.copy()
-    for obj in self._world.objects:
-      canvas[tuple(obj.pos)] = self._obj_ids[type(obj)]
-    return canvas
