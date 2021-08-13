@@ -39,7 +39,7 @@ class Recorder:
         f'inventory_{k}': v for k, v
         in details.pop('inventory').items()})
     details.update({
-        f'achivement_{k}': v for k, v
+        f'achievement_{k}': v for k, v
         in details.pop('achievements').items()})
     self._episode.append({
         'action': action,
