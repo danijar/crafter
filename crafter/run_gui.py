@@ -62,7 +62,7 @@ def main():
   env = crafter.Env(
       area=args.area, view=args.view, length=args.length, seed=args.seed)
   if args.record:
-    env = crafter.Recorder(env)
+    env = crafter.Recorder(env, args.record)
   env.reset()
   achievements = set()
   duration = 0
@@ -135,8 +135,6 @@ def main():
       if args.death == 'quit':
         running = False
       if args.death == 'reset':
-        if args.record:
-          env.save(args.record)
         print('\nStarting a new episode.')
         env.reset()
         achievements = set()

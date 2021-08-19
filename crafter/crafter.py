@@ -34,6 +34,9 @@ class Env:
     self._player = None
     self._last_health = None
     self._unlocked = None
+    # Some libraries expect these attributes to be set.
+    self.reward_range = None
+    self.metadata = None
 
   @property
   def observation_space(self):

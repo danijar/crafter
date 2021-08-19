@@ -7,9 +7,15 @@ import numpy as np
 
 class Recorder:
 
-  def __init__(self, env, size=(512, 512)):
+  def __init__(
+      self, env, directory=None, size=(512, 512),
+      save_video=True, save_episode=True, include_image=True):
     self._env = env
+    self._directory = directory and pathlib.Path(directory)
     self._size = size
+    self._save_episode = save_episode
+    self._save_video = save_video
+    self._include_image = include_image
     self._frames = []
     self._episode = None
 
@@ -48,6 +54,8 @@ class Recorder:
         'done': done,
         **details,
     })
+    if done and self._directory:
+      self._save()
     return obs, reward, done, info
 
   @property
@@ -63,12 +71,16 @@ class Recorder:
         k: np.array([step[k] for step in self._episode])
         for k in self._episode[0]}
 
-  def save(self, directory):
-    directory = pathlib.Path(directory)
-    directory.mkdir(exist_ok=True)
+  def _save(self):
+    self._directory.mkdir(exist_ok=True)
     timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-    path = str(directory / timestamp)
-    imageio.mimsave(path + '.mp4', self._frames)
-    print('Saved', path + '.mp4')
-    np.savez_compressed(path + '.npz', **self.episode())
-    print('Saved', path + '.npz')
+    path = str(self._directory / timestamp)
+    if self._save_video:
+      imageio.mimsave(path + '.mp4', self._frames)
+      print('Saved', path + '.mp4')
+    if self._save_episode:
+      episode = self.episode()
+      if not self._include_image:
+        episode.pop('image')
+      np.savez_compressed(path + '.npz', **episode)
+      print('Saved', path + '.npz')
