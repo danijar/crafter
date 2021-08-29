@@ -72,7 +72,7 @@ class Recorder:
         for k in self._episode[0]}
 
   def _save(self):
-    self._directory.mkdir(exist_ok=True)
+    self._directory.mkdir(exist_ok=True, parents=True)
     timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
     path = str(self._directory / timestamp)
     if self._save_video:
