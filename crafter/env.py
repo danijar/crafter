@@ -1,3 +1,5 @@
+import collections
+
 import numpy as np
 
 from . import constants
@@ -6,17 +8,32 @@ from . import objects
 from . import worldgen
 
 
-class Env:
+# Gym is an optional dependency.
+try:
+  import gym
+  DiscreteSpace = gym.spaces.Discrete
+  BoxSpace = gym.spaces.Box
+  DictSpace = gym.spaces.Dict
+  BaseClass = gym.Env
+except ImportError:
+  DiscreteSpace = collections.namedtuple('DiscreteSpace', 'n')
+  BoxSpace = collections.namedtuple('BoxSpace', 'low, high, shape, dtype')
+  DictSpace = collections.namedtuple('DictSpace', 'spaces')
+  BaseClass = object
+
+
+class Env(BaseClass):
 
   def __init__(
-      self, area=(64, 64), view=(9, 9), size=(64, 64), length=10000,
-      seed=None):
+      self, area=(64, 64), view=(9, 9), size=(64, 64),
+      reward=True, length=10000, seed=None):
     view = np.array(view if hasattr(view, '__len__') else (view, view))
     size = np.array(size if hasattr(size, '__len__') else (size, size))
     seed = np.random.randint(0, 2**32 - 1) if seed is None else seed
     self._area = area
     self._view = view
     self._size = size
+    self._reward = reward
     self._length = length
     self._seed = seed
     self._episode = 0
@@ -40,11 +57,11 @@ class Env:
 
   @property
   def observation_space(self):
-    return engine.BoxSpace(0, 255, tuple(self._size) + (3,), np.uint8)
+    return BoxSpace(0, 255, tuple(self._size) + (3,), np.uint8)
 
   @property
   def action_space(self):
-    return engine.DiscreteSpace(len(constants.actions))
+    return DiscreteSpace(len(constants.actions))
 
   @property
   def action_names(self):
@@ -77,14 +94,17 @@ class Env:
         # if self._player.distance(center) < 4 * max(self._view):
         self._balance_chunk(chunk, objs)
     obs = self._obs()
-    reward = (self._player.health - self._last_health) / 10
-    self._last_health = self._player.health
-    unlocked = {
-        name for name, count in self._player.achievements.items()
-        if count > 0 and name not in self._unlocked}
-    if unlocked:
-      self._unlocked |= unlocked
-      reward += 1.0
+    if self._reward:
+      reward = (self._player.health - self._last_health) / 10
+      self._last_health = self._player.health
+      unlocked = {
+          name for name, count in self._player.achievements.items()
+          if count > 0 and name not in self._unlocked}
+      if unlocked:
+        self._unlocked |= unlocked
+        reward += 1.0
+    else:
+      reward = 0.0
     dead = self._player.health <= 0
     over = self._length and self._step >= self._length
     done = dead or over

@@ -7,17 +7,6 @@ import numpy as np
 from PIL import Image, ImageEnhance
 
 
-try:
-  import gym  # Gym is an optional dependency.
-  DiscreteSpace = gym.spaces.Discrete
-  BoxSpace = gym.spaces.Box
-  DictSpace = gym.spaces.Dict
-except ImportError:
-  DiscreteSpace = collections.namedtuple('DiscreteSpace', 'n')
-  BoxSpace = collections.namedtuple('BoxSpace', 'low, high, shape, dtype')
-  DictSpace = collections.namedtuple('DictSpace', 'spaces')
-
-
 class AttrDict(dict):
 
   __getattr__ = dict.__getitem__
