@@ -61,8 +61,7 @@ def main():
 
   env = crafter.Env(
       area=args.area, view=args.view, length=args.length, seed=args.seed)
-  if args.record:
-    env = crafter.Recorder(env, args.record)
+  env = crafter.Recorder(env, args.record)
   env.reset()
   achievements = set()
   duration = 0
