@@ -29,7 +29,7 @@ class StatsRecorder:
 
   def __init__(self, env, directory):
     self._env = env
-    self._directory = pathlib.Path(directory)
+    self._directory = pathlib.Path(directory).expanduser()
     self._directory.mkdir(exist_ok=True, parents=True)
     self._file = (self._directory / 'stats.jsonl').open('a')
     self._length = None
@@ -69,7 +69,7 @@ class VideoRecorder:
     if not hasattr(env, 'episode_name'):
       env = EpisodeName(env)
     self._env = env
-    self._directory = pathlib.Path(directory)
+    self._directory = pathlib.Path(directory).expanduser()
     self._directory.mkdir(exist_ok=True, parents=True)
     self._size = size
     self._frames = None
@@ -102,7 +102,7 @@ class EpisodeRecorder:
     if not hasattr(env, 'episode_name'):
       env = EpisodeName(env)
     self._env = env
-    self._directory = pathlib.Path(directory)
+    self._directory = pathlib.Path(directory).expanduser()
     self._directory.mkdir(exist_ok=True, parents=True)
     self._episode = None
 

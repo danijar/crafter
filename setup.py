@@ -4,7 +4,7 @@ import pathlib
 
 setuptools.setup(
     name='crafter',
-    version='1.5.0',
+    version='1.5.1',
     description='Open world survival game for reinforcement learning.',
     url='http://github.com/danijar/crafter',
     long_description=pathlib.Path('README.md').read_text(),
