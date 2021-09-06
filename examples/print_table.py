@@ -5,15 +5,15 @@ import pathlib
 import numpy as np
 
 
-def print_scores(indir, legend, budget=5e6):
+def print_table(inpaths, legend, budget=1e6):
 
   print('Loading runs:')
   runs = []
-  for filename in pathlib.Path(indir).glob('**/*.json'):
-    loaded = json.loads(filename.read_text())
+  for filename in inpaths:
+    loaded = json.loads(pathlib.Path(filename).read_text())
     for run in [loaded] if isinstance(loaded, dict) else loaded:
       print(f'- {run["method"]} seed {run["seed"]}', flush=True)
-      if run['xs'][-1] < 0.99 * budget:
+      if run['xs'][-1] < budget - 1e4:
         print(f'  Contains only {run["xs"][-1]} steps!')
       runs.append(run)
   print('')
@@ -34,8 +34,10 @@ def print_scores(indir, legend, budget=5e6):
   first = next(iter(legend.keys()))
   tasks = sorted(tasks, key=lambda task: -percents[first][task])
   legend = dict(reversed(legend.items()))
-  cols = ''.join(f' & {k:<9}' for k in legend.values())
+  cols = ''.join(f' & {k:<13}' for k in legend.values())
   print(r'\newcommand{\o}{\hphantom{0}}')
+  print(r'\newcommand{\b}[1]{\textbf{#1}}')
+  print('')
   print(f'{"Achievement":<20}' + cols + r' \\')
   print('')
   for task in tasks:
@@ -44,20 +46,50 @@ def print_scores(indir, legend, budget=5e6):
     else:
       name = task.replace('_', ' ').title()
     print(f'{name:<20}', end='')
+    best = max(percents[m][task] for m in legend.keys())
     for method in legend.keys():
-      fmt = f'{percents[method][task]:.1f}'
+      value = percents[method][task]
+      bold = value >= 0.95 * best and value > 0
+      fmt = f'{value:.1f}'
       fmt = (r'\o' if len(fmt) < 4 else ' ') + fmt
+      fmt = rf'\b{{{fmt}}}' if bold else f'   {fmt} '
       print(rf' & ${fmt}\%$', end='')
     print(r' \\')
   print('')
 
   print(f'{"Average":<20}', end='')
-  for method in legend.keys():
-    fmt = f'{np.mean(list(percents[method].values())):.1f}'
+  averages = {m: np.mean(list(percents[m].values())) for m in legend.keys()}
+  best = max(averages.values())
+  for method, average in averages.items():
+    fmt = f'{average:.1f}'
     fmt = (r'\o' if len(fmt) < 4 else ' ') + fmt
+    fmt = rf'\b{{{fmt}}}' if bold else f'   {fmt} '
     print(rf' & ${fmt}\%$', end='')
   print(r' \\')
 
 
-legend = {'dreamerv2': 'DreamerV2', 'ppo': 'PPO', 'random': 'Random'}
-print_scores('runs', legend)
+inpaths = [
+    'runs/crafter-reward-dreamerv2.json',
+    'runs/crafter-reward-rainbow.json',
+    'runs/crafter-reward-ppo.json',
+    'runs/crafter-reward-efficient_rainbow.json',
+    'runs/crafter-reward-rnd.json',
+]
+legend = {
+    'dreamerv2': 'DreamerV2',
+    'rainbow': 'Rainbow',
+    'ppo': 'PPO',
+    'efficient_rainbow': 'Eff. Rainbow',
+    'rnd': 'RND',
+}
+print_table(inpaths, legend)
+
+inpaths = [
+    'runs/crafter-noreward-rnd.json',
+    'runs/crafter-noreward-random.json',
+]
+legend = {
+    'rnd': 'RND',
+    'random': 'Random',
+}
+print_table(inpaths, legend)

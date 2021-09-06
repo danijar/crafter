@@ -4,16 +4,16 @@ import crafter
 import tqdm
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--outdir', type=str, default='random-episodes')
-parser.add_argument('--steps', type=float, default=5e6)
+parser.add_argument('--outdir', default='logdir/crafter-noreward-random/0')
+parser.add_argument('--steps', type=float, default=1e6)
 args = parser.parse_args()
 
 env = crafter.Env()
 env = crafter.Recorder(
     env, args.outdir,
-    save_episode=True,
+    save_stats=True,
+    save_episode=False,
     save_video=False,
-    include_image=False,
 )
 action_space = env.action_space
 
