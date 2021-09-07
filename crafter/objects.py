@@ -27,7 +27,7 @@ class Object:
 
   @health.setter
   def health(self, value):
-    self.inventory['health'] = value
+    self.inventory['health'] = max(0, value)
 
   @property
   def all_dirs(self):

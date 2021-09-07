@@ -94,17 +94,14 @@ class Env(BaseClass):
         # if self._player.distance(center) < 4 * max(self._view):
         self._balance_chunk(chunk, objs)
     obs = self._obs()
-    if self._reward:
-      reward = (self._player.health - self._last_health) / 10
-      self._last_health = self._player.health
-      unlocked = {
-          name for name, count in self._player.achievements.items()
-          if count > 0 and name not in self._unlocked}
-      if unlocked:
-        self._unlocked |= unlocked
-        reward += 1.0
-    else:
-      reward = 0.0
+    reward = (self._player.health - self._last_health) / 10
+    self._last_health = self._player.health
+    unlocked = {
+        name for name, count in self._player.achievements.items()
+        if count > 0 and name not in self._unlocked}
+    if unlocked:
+      self._unlocked |= unlocked
+      reward += 1.0
     dead = self._player.health <= 0
     over = self._length and self._step >= self._length
     done = dead or over
@@ -114,7 +111,10 @@ class Env(BaseClass):
         'discount': 1 - float(dead),
         'semantic': self._sem_view(),
         'player_pos': self._player.pos,
+        'reward': reward,
     }
+    if not self._reward:
+      reward = 0.0
     return obs, reward, done, info
 
   def render(self, size=None):

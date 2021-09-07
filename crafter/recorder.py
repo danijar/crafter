@@ -33,6 +33,7 @@ class StatsRecorder:
     self._directory.mkdir(exist_ok=True, parents=True)
     self._file = (self._directory / 'stats.jsonl').open('a')
     self._length = None
+    self._reward = None
     self._unlocked = None
     self._stats = None
 
@@ -44,6 +45,7 @@ class StatsRecorder:
   def reset(self):
     obs = self._env.reset()
     self._length = 0
+    self._reward = 0
     self._unlocked = None
     self._stats = None
     return obs
@@ -51,8 +53,9 @@ class StatsRecorder:
   def step(self, action):
     obs, reward, done, info = self._env.step(action)
     self._length += 1
+    self._reward += info['reward']
     if done:
-      self._stats = {'length': self._length}
+      self._stats = {'length': self._length, 'reward': round(self._reward, 1)}
       for key, value in info['achievements'].items():
         self._stats[f'achievement_{key}'] = value
       self._save()
