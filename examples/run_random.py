@@ -4,7 +4,7 @@ import crafter
 import tqdm
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--outdir', default='logdir/crafter-noreward-random/0')
+parser.add_argument('--outdir', default='logdir/crafter_noreward-random/0')
 parser.add_argument('--steps', type=float, default=1e6)
 args = parser.parse_args()
 

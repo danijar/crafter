@@ -28,6 +28,7 @@ def binning(xs, ys, borders, reducer=np.nanmean, fill='nan'):
 
 
 def plot_curves(inpaths, outpath, legend, colors, cols=4, budget=1e6):
+
   print('Loading runs:')
   runs = []
   for filename in inpaths:
@@ -43,11 +44,12 @@ def plot_curves(inpaths, outpath, legend, colors, cols=4, budget=1e6):
     methods = sorted(set(run['method'] for run in runs))
     legend = {x: x.replace('_', ' ').title() for x in methods}
 
-  fig, ax = plt.subplots(figsize=(4.5, 2))
+  fig, ax = plt.subplots(figsize=(4.5, 2.3))
   for j, (method, label) in enumerate(legend.items()):
     relevant = [run for run in runs if run['method'] == method]
     if not relevant:
       print(f'No runs found for method {method}.')
+
     # Average within each time bucket.
     binned_xs, binned_ys = [], []
     for run in relevant:
@@ -67,12 +69,10 @@ def plot_curves(inpaths, outpath, legend, colors, cols=4, budget=1e6):
   ax.axhline(y=22, c='#888888', ls='--', lw=1)
   ax.text(6.2e5, 18, 'Optimal', c='#888888')
 
-  ax.set_title('Crafter with Rewards')
+  ax.set_title('Crafter Reward')
   ax.set_xlim(0, budget)
   ax.ticklabel_format(axis='x', style='sci', scilimits=(0, 0))
-  ax.xaxis.get_offset_text().set_visible(False)
-  ax.set_xlabel('Million Env Steps')
-  ax.set_ylabel('Episode Reward')
+  ax.grid(alpha=0.3)
   ax.xaxis.set_major_locator(ticker.MaxNLocator(5, steps=[1, 2, 2.5, 5, 10]))
   ax.yaxis.set_major_locator(ticker.MaxNLocator(6, steps=[1, 2, 2.5, 5, 10]))
 
@@ -85,20 +85,16 @@ def plot_curves(inpaths, outpath, legend, colors, cols=4, budget=1e6):
 
 
 inpaths = [
-    'runs/crafter-reward-dreamerv2.json',
-    'runs/crafter-reward-rainbow.json',
-    'runs/crafter-reward-ppo.json',
-    'runs/crafter-reward-efficient_rainbow.json',
-    'runs/crafter-reward-rnd.json',
-    'runs/crafter-noreward-random.json',
+    'runs/crafter_reward-dreamerv2.json',
+    'runs/crafter_reward-rainbow.json',
+    'runs/crafter_reward-ppo.json',
+    'runs/crafter_noreward-random.json',
 ]
 legend = {
     'dreamerv2': 'DreamerV2',
     'rainbow': 'Rainbow',
     'ppo': 'PPO',
-    'efficient_rainbow': 'Efficient Rainbow',
-    'rnd': 'RND',
     'random': 'Random',
 }
-colors = ['#377eb8', '#4daf4a', '#984ea3', '#c68628', '#b54c38', '#785c56']
+colors = ['#377eb8', '#4daf4a', '#984ea3', '#6a554d']
 plot_curves(inpaths, 'results/curves.pdf', legend, colors)

@@ -4,7 +4,7 @@ import crafter
 import stable_baselines3
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--outdir', default='logdir/crafter-reward-ppo/0')
+parser.add_argument('--outdir', default='logdir/crafter_reward-ppo/0')
 parser.add_argument('--steps', type=float, default=1e6)
 args = parser.parse_args()
 

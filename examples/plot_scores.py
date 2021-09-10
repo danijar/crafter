@@ -1,11 +1,13 @@
 import json
 import pathlib
+import warnings
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plot_bars(inpaths, outpath, legend, colors, budget=1e6, sort=False):
+def plot_bars(
+    inpaths, outpath, legend, colors, budget=1e6, sort=False, ylim=None):
 
   print('Loading runs:')
   runs = []
@@ -31,73 +33,90 @@ def plot_bars(inpaths, outpath, legend, colors, budget=1e6, sort=False):
         k = tasks.index(key)
         percent = 100 * (np.array(values[:episodes]) >= 1).mean()
         percents[i, j, k] = percent
+  # Geometric mean.
+  with warnings.catch_warnings():  # Empty borders become NaN.
+    warnings.simplefilter('ignore', category=RuntimeWarning)
+    scores = np.exp(np.nanmean(np.log(1 + percents), -1)) - 1
 
   if not legend:
     methods = sorted(set(run['method'] for run in runs))
     legend = {x: x.replace('_', ' ').title() for x in methods}
+  legend = dict(reversed(legend.items()))
 
-  if sort:
-    first = list(legend.keys())[0]
-    order = np.argsort(-np.nanmean(percents[methods.index(first)], 0), -1)
-    percents = percents[:, :, order]
-    tasks = np.array(tasks)[order].tolist()
+  scores = scores[np.array([methods.index(m) for m in legend.keys()])]
+  mean = np.nanmean(scores, -1)
+  std = np.nanstd(scores, -1)
 
-  fig, ax = plt.subplots(figsize=(7, 3))
-  centers = np.arange(len(tasks))
+  fig, ax = plt.subplots(figsize=(4, 3))
+  centers = np.arange(len(legend))
   width = 0.7
-  for index, (method, label) in enumerate(legend.items()):
-    heights = np.nanmean(percents[methods.index(method)], 0)
-    pos = centers + width * (0.5 / len(methods) + index / len(methods) - 0.5)
-    color = colors[index]
-    ax.bar(pos, heights, width / len(methods), label=label, color=color)
+  colors = list(reversed(colors[:len(legend)]))
+  error_kw = dict(capsize=5, c='#000')
+  ax.bar(centers, mean, yerr=std, color=colors, error_kw=error_kw)
 
-  names = [x[len('achievement_'):].replace('_', ' ').title() for x in tasks]
   ax.spines['top'].set_visible(False)
   ax.spines['right'].set_visible(False)
   ax.spines['bottom'].set_visible(False)
   ax.tick_params(
-      axis='x', which='both', width=14, length=0.8, direction='inout')
+      axis='x', which='both', width=50, length=0.8, direction='inout')
   ax.set_xlim(centers[0] - 2 * (1 - width), centers[-1] + 2 * (1 - width))
   ax.set_xticks(centers + 0.0)
-  ax.set_xticklabels(names, rotation=45, ha='right', rotation_mode='anchor')
+  ax.set_xticklabels(
+      list(legend.values()), rotation=45, ha='right', rotation_mode='anchor')
 
-  ax.set_ylabel('Success Rate (%)')
-  ax.set_yscale('log')
-  ax.set_ylim(0.01, 100)
-  ax.set_yticks([0.01, 0.1, 1, 10, 100])
-  ax.set_yticklabels('0.01 0.1 1 10 100'.split())
+  ax.set_ylabel('Crafter Score (%)')
+  if ylim:
+    ax.set_ylim(0, ylim)
 
-  fig.tight_layout(rect=(0, 0, 1, 0.95))
-  fig.legend(
-      loc='upper center', ncol=10, frameon=False, borderpad=0, borderaxespad=0)
-
+  fig.tight_layout()
   pathlib.Path(outpath).parent.mkdir(exist_ok=True, parents=True)
   fig.savefig(outpath)
   print(f'Saved {outpath}')
 
 
 inpaths = [
+    'runs/crafter_reward-human.json',
     'runs/crafter_reward-dreamerv2.json',
     'runs/crafter_reward-ppo.json',
     'runs/crafter_reward-rainbow.json',
-]
-legend = {
-    'dreamerv2': 'DreamerV2',
-    'ppo': 'PPO',
-    'rainbow': 'Rainbow',
-}
-colors = ['#377eb8', '#5fc35d', '#984ea3']
-plot_bars(inpaths, 'results/bars-reward.pdf', legend, colors)
-
-inpaths = [
     'runs/crafter_noreward-unsup_rnd.json',
     'runs/crafter_noreward-unsup_plan2explore.json',
     'runs/crafter_noreward-random.json',
 ]
 legend = {
-    'unsup_rnd': 'RND',
-    'unsup_plan2explore': 'Plan2Explore',
+    'human': 'Human Experts',
+    'dreamerv2': 'DreamerV2',
+    'ppo': 'PPO',
+    'rainbow': 'Rainbow',
+    'unsup_rnd': 'RND\n(Unsup)',
+    'unsup_plan2explore': 'Plan2Explore\n(Unsup)',
     'random': 'Random',
 }
-colors = ['#bf3217', '#de9f42', '#6a554d']
-plot_bars(inpaths, 'results/bars-noreward.pdf', legend, colors)
+colors = [
+    '#cccccc',
+    '#377eb8', '#5fc35d', '#984ea3',
+    '#bf3217', '#de9f42', '#6a554d',
+]
+plot_bars(inpaths, 'results/scores-human.pdf', legend, colors, ylim=100)
+
+inpaths = [
+    'runs/crafter_reward-dreamerv2.json',
+    'runs/crafter_reward-ppo.json',
+    'runs/crafter_reward-rainbow.json',
+    'runs/crafter_noreward-unsup_rnd.json',
+    'runs/crafter_noreward-unsup_plan2explore.json',
+    'runs/crafter_noreward-random.json',
+]
+legend = {
+    'dreamerv2': 'DreamerV2',
+    'ppo': 'PPO',
+    'rainbow': 'Rainbow',
+    'unsup_rnd': 'RND\n(Unsup)',
+    'unsup_plan2explore': 'Plan2Explore\n(Unsup)',
+    'random': 'Random',
+}
+colors = [
+    '#377eb8', '#5fc35d', '#984ea3',
+    '#bf3217', '#de9f42', '#6a554d',
+]
+plot_bars(inpaths, 'results/scores-agents.pdf', legend, colors, ylim=12)

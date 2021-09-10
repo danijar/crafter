@@ -27,69 +27,70 @@ def binning(xs, ys, borders, reducer=np.nanmean, fill='nan'):
   return borders[1:], np.array(binned)
 
 
-def plot_grid(indir, legend, colors, cols=4, budget=5e6):
+def plot_grid(
+    inpath, outpath, color, budget=int(1e6), cols=4, size=(2, 1.8)):
+
   print('Loading runs:')
   runs = []
-  for filename in pathlib.Path(indir).glob('**/*.json'):
-    loaded = json.loads(filename.read_text())
-    for run in [loaded] if isinstance(loaded, dict) else loaded:
-      print(f'- {run["method"]} seed {run["seed"]}', flush=True)
-      if run['xs'][-1] < 0.99 * budget:
-        print(f'  Contains only {run["xs"][-1]} steps!')
-      runs.append(run)
-  print('')
-  tasks = sorted([x for x in runs[0] if x.startswith('achievement_')])
-  tasks = ['score', 'length'] + tasks
-  borders = np.arange(0, budget, 1e5)
+  loaded = json.loads(pathlib.Path(inpath).read_text())
+  for run in [loaded] if isinstance(loaded, dict) else loaded:
+    print(f'- {run["method"]} seed {run["seed"]}', flush=True)
+    if run['xs'][-1] < budget - 1e4:
+      print(f'  Contains only {run["xs"][-1]} steps!')
+    runs.append(run)
+  borders = np.arange(0, budget, 1e4)
+  keys = ('reward', 'length')
+  keys += tuple(k for k in runs[0].keys() if k.startswith('achievement_'))
 
-  print('Plotting:')
-  rows = len(tasks) // cols
+  rows = len(keys) // cols
   fig, axes = plt.subplots(
-      nrows=rows, ncols=cols, figsize=(2 * cols, 1.8 * rows))
-  for i, (task, ax) in enumerate(zip(tasks, axes.flatten())):
-    ax.set_title(task.replace('achievement_', '').replace('_', ' ').title())
-    maxes = []
-    for j, (method, label) in enumerate(legend.items()):
-      if i > 0: label = None
-      relevant = [run for run in runs if run['method'] == method]
-      print(f'- {task} {method} ({len(relevant)} seeds)', flush=True)
-      xs = np.concatenate([run['xs'] for run in relevant])
-      ys = np.concatenate([run[task] for run in relevant])
-      means = binning(xs, ys, borders, np.nanmean)[1]
-      mins = binning(xs, ys, borders, np.nanmin)[1]
-      maxs = binning(xs, ys, borders, np.nanmax)[1]
-      kwargs = dict(alpha=0.2, linewidths=0, color=colors[j], zorder=10 - j)
-      ax.fill_between(borders[1:], mins, maxs, **kwargs)
-      ax.plot(borders[1:], means, label=label, color=colors[j], zorder=100 - j)
-      maxes.append(maxs)
-    if np.nanmax(maxes) < 1:
-      ax.set_ylim(-0.05, 1.05)
+      nrows=rows, ncols=cols, figsize=(size[0] * cols, size[1] * rows))
+
+  for ax, key in zip(axes.flatten(), keys):
+    ax.set_title(key.replace('achievement_', '').replace('_', ' ').title())
+    xs = np.concatenate([run['xs'] for run in runs])
+    ys = np.concatenate([run[key] for run in runs])
+
+    binxs, binys = binning(xs, ys, borders, np.nanmean)
+    ax.plot(binxs, binys, color=color)
+
+    mins = binning(xs, ys, borders, np.nanmin)[1]
+    maxs = binning(xs, ys, borders, np.nanmax)[1]
+    ax.fill_between(binxs, mins, maxs, linewidths=0, alpha=0.2, color=color)
+
     ax.ticklabel_format(axis='x', style='sci', scilimits=(0, 0))
-    ax.xaxis.set_major_locator(ticker.MaxNLocator(6, steps=[1, 2, 2.5, 5, 10]))
+    ax.xaxis.set_major_locator(ticker.MaxNLocator(4, steps=[1, 2, 2.5, 5, 10]))
     ax.yaxis.set_major_locator(ticker.MaxNLocator(5, steps=[1, 2, 2.5, 5, 10]))
+
+    if maxs.max() == 0:
+      ax.set_ylim(-0.05, 1.05)
+
   fig.tight_layout()
-  fig.subplots_adjust(bottom=0.08)
-  fig.legend(loc='lower center', ncol=100, frameon=False)
-  return fig
+  pathlib.Path(outpath).parent.mkdir(exist_ok=True, parents=True)
+  fig.savefig(outpath)
+  print(f'Saved {outpath}')
 
 
-filename = pathlib.Path('results/grid-dreamerv2.pdf')
-filename.parent.mkdir(exist_ok=True, parents=True)
-legend = {'dreamerv2': 'DreamerV2'}
-colors = ['#377eb8']
-plot_grid('runs', legend, colors).savefig(filename)
-print(f'Saved {filename}\n')
+plot_grid(
+    'runs/crafter_reward-dreamerv2.json',
+    'results/grid-dreamerv2.pdf', '#377eb8')
 
-filename = pathlib.Path('results/grid-ppo.pdf')
-filename.parent.mkdir(exist_ok=True, parents=True)
-legend = {'ppo': 'PPO'}
-colors = ['#4daf4a']
-plot_grid('runs', legend, colors).savefig(filename)
-print(f'Saved {filename}\n')
+plot_grid(
+    'runs/crafter_reward-ppo.json',
+    'results/grid-ppo.pdf', '#5fc35d')
 
-filename = pathlib.Path('results/grid-random.pdf')
-filename.parent.mkdir(exist_ok=True, parents=True)
-legend = {'random': 'Random'}
-colors = ['#a65628']
-plot_grid('runs', legend, colors).savefig(filename)
-print(f'Saved {filename}\n')
+plot_grid(
+    'runs/crafter_reward-rainbow.json',
+    'results/grid-rainbow.pdf', '#984ea3')
+
+plot_grid(
+    'runs/crafter_noreward-unsup_rnd.json',
+    'results/grid-unsup_rnd.pdf', '#bf3217')
+
+plot_grid(
+    'runs/crafter_noreward-unsup_plan2explore.json',
+    'results/grid-unsup_plan2explore.pdf', '#de9f42')
+
+plot_grid(
+    'runs/crafter_noreward-random.json',
+    'results/grid-random.pdf', '#6a554d')
