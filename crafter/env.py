@@ -29,7 +29,7 @@ class Env(BaseClass):
       reward=True, length=10000, seed=None):
     view = np.array(view if hasattr(view, '__len__') else (view, view))
     size = np.array(size if hasattr(size, '__len__') else (size, size))
-    seed = np.random.randint(0, 2**32 - 1) if seed is None else seed
+    seed = np.random.randint(0, 2**31 - 1) if seed is None else seed
     self._area = area
     self._view = view
     self._size = size
@@ -71,7 +71,7 @@ class Env(BaseClass):
     center = (self._world.area[0] // 2, self._world.area[1] // 2)
     self._episode += 1
     self._step = 0
-    self._world.reset(seed=hash((self._seed, self._episode)) % 2 ** 32)
+    self._world.reset(seed=hash((self._seed, self._episode)) % (2 ** 31 - 1))
     self._update_time()
     self._player = objects.Player(self._world, center)
     self._last_health = self._player.health
