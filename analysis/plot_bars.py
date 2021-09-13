@@ -77,9 +77,9 @@ def plot_bars(inpaths, outpath, legend, colors, budget=1e6, sort=False):
 
 
 inpaths = [
-    'runs/crafter_reward-dreamerv2.json',
-    'runs/crafter_reward-ppo.json',
-    'runs/crafter_reward-rainbow.json',
+    'scores/crafter_reward-dreamerv2.json',
+    'scores/crafter_reward-ppo.json',
+    'scores/crafter_reward-rainbow.json',
 ]
 legend = {
     'dreamerv2': 'DreamerV2',
@@ -90,9 +90,9 @@ colors = ['#377eb8', '#5fc35d', '#984ea3']
 plot_bars(inpaths, 'results/bars-reward.pdf', legend, colors)
 
 inpaths = [
-    'runs/crafter_noreward-unsup_rnd.json',
-    'runs/crafter_noreward-unsup_plan2explore.json',
-    'runs/crafter_noreward-random.json',
+    'scores/crafter_noreward-unsup_rnd.json',
+    'scores/crafter_noreward-unsup_plan2explore.json',
+    'scores/crafter_noreward-random.json',
 ]
 legend = {
     'unsup_rnd': 'RND',

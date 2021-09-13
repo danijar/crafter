@@ -72,25 +72,25 @@ def plot_grid(
 
 
 plot_grid(
-    'runs/crafter_reward-dreamerv2.json',
+    'scores/crafter_reward-dreamerv2.json',
     'results/grid-dreamerv2.pdf', '#377eb8')
 
 plot_grid(
-    'runs/crafter_reward-ppo.json',
+    'scores/crafter_reward-ppo.json',
     'results/grid-ppo.pdf', '#5fc35d')
 
 plot_grid(
-    'runs/crafter_reward-rainbow.json',
+    'scores/crafter_reward-rainbow.json',
     'results/grid-rainbow.pdf', '#984ea3')
 
 plot_grid(
-    'runs/crafter_noreward-unsup_rnd.json',
+    'scores/crafter_noreward-unsup_rnd.json',
     'results/grid-unsup_rnd.pdf', '#bf3217')
 
 plot_grid(
-    'runs/crafter_noreward-unsup_plan2explore.json',
+    'scores/crafter_noreward-unsup_plan2explore.json',
     'results/grid-unsup_plan2explore.pdf', '#de9f42')
 
 plot_grid(
-    'runs/crafter_noreward-random.json',
+    'scores/crafter_noreward-random.json',
     'results/grid-random.pdf', '#6a554d')

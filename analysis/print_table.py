@@ -90,7 +90,7 @@ def print_table(inpaths, legend, budget=1e6, sort=False):
 
 
 inpaths = [
-    'runs/crafter_reward-human.json',
+    'scores/crafter_reward-human.json',
 ]
 legend = {
     'human': 'Human Experts',
@@ -98,9 +98,9 @@ legend = {
 print_table(inpaths, legend)
 
 inpaths = [
-    'runs/crafter_reward-dreamerv2.json',
-    'runs/crafter_reward-ppo.json',
-    'runs/crafter_reward-rainbow.json',
+    'scores/crafter_reward-dreamerv2.json',
+    'scores/crafter_reward-ppo.json',
+    'scores/crafter_reward-rainbow.json',
 ]
 legend = {
     'dreamerv2': 'DreamerV2',
@@ -111,9 +111,9 @@ print_table(inpaths, legend)
 
 
 inpaths = [
-    'runs/crafter_noreward-unsup_rnd.json',
-    'runs/crafter_noreward-unsup_plan2explore.json',
-    'runs/crafter_noreward-random.json',
+    'scores/crafter_noreward-unsup_rnd.json',
+    'scores/crafter_noreward-unsup_plan2explore.json',
+    'scores/crafter_noreward-random.json',
 ]
 legend = {
     'unsup_rnd': 'RND',

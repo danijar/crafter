@@ -85,10 +85,10 @@ def plot_curves(inpaths, outpath, legend, colors, cols=4, budget=1e6):
 
 
 inpaths = [
-    'runs/crafter_reward-dreamerv2.json',
-    'runs/crafter_reward-rainbow.json',
-    'runs/crafter_reward-ppo.json',
-    'runs/crafter_noreward-random.json',
+    'scores/crafter_reward-dreamerv2.json',
+    'scores/crafter_reward-rainbow.json',
+    'scores/crafter_reward-ppo.json',
+    'scores/crafter_noreward-random.json',
 ]
 legend = {
     'dreamerv2': 'DreamerV2',

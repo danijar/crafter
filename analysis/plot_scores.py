@@ -75,13 +75,13 @@ def plot_bars(
 
 
 inpaths = [
-    'runs/crafter_reward-human.json',
-    'runs/crafter_reward-dreamerv2.json',
-    'runs/crafter_reward-ppo.json',
-    'runs/crafter_reward-rainbow.json',
-    'runs/crafter_noreward-unsup_rnd.json',
-    'runs/crafter_noreward-unsup_plan2explore.json',
-    'runs/crafter_noreward-random.json',
+    'scores/crafter_reward-human.json',
+    'scores/crafter_reward-dreamerv2.json',
+    'scores/crafter_reward-ppo.json',
+    'scores/crafter_reward-rainbow.json',
+    'scores/crafter_noreward-unsup_rnd.json',
+    'scores/crafter_noreward-unsup_plan2explore.json',
+    'scores/crafter_noreward-random.json',
 ]
 legend = {
     'human': 'Human Experts',
@@ -100,12 +100,12 @@ colors = [
 plot_bars(inpaths, 'results/scores-human.pdf', legend, colors, ylim=100)
 
 inpaths = [
-    'runs/crafter_reward-dreamerv2.json',
-    'runs/crafter_reward-ppo.json',
-    'runs/crafter_reward-rainbow.json',
-    'runs/crafter_noreward-unsup_rnd.json',
-    'runs/crafter_noreward-unsup_plan2explore.json',
-    'runs/crafter_noreward-random.json',
+    'scores/crafter_reward-dreamerv2.json',
+    'scores/crafter_reward-ppo.json',
+    'scores/crafter_reward-rainbow.json',
+    'scores/crafter_noreward-unsup_rnd.json',
+    'scores/crafter_noreward-unsup_plan2explore.json',
+    'scores/crafter_noreward-random.json',
 ]
 legend = {
     'dreamerv2': 'DreamerV2',
