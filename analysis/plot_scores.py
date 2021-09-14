@@ -1,43 +1,15 @@
-import json
 import pathlib
-import warnings
 
 import numpy as np
 import matplotlib.pyplot as plt
 
+import common
 
-def plot_bars(
-    inpaths, outpath, legend, colors, budget=1e6, sort=False, ylim=None):
 
-  print('Loading runs:')
-  runs = []
-  for filename in inpaths:
-    loaded = json.loads(pathlib.Path(filename).read_text())
-    for run in [loaded] if isinstance(loaded, dict) else loaded:
-      print(f'- {run["method"]} seed {run["seed"]}', flush=True)
-      if run['xs'][-1] < budget - 1e4:
-        print(f'  Contains only {run["xs"][-1]} steps!')
-      runs.append(run)
-  methods = sorted(set(run['method'] for run in runs))
-  seeds = sorted(set(run['seed'] for run in runs))
-  tasks = sorted(key for key in runs[0] if key.startswith('achievement_'))
-
-  percents = np.empty((len(methods), len(seeds), len(tasks)))
-  percents[:] = np.nan
-  for run in runs:
-    episodes = (np.array(run['xs']) <= budget).sum()
-    i = methods.index(run['method'])
-    j = seeds.index(run['seed'])
-    for key, values in run.items():
-      if key in tasks:
-        k = tasks.index(key)
-        percent = 100 * (np.array(values[:episodes]) >= 1).mean()
-        percents[i, j, k] = percent
-  # Geometric mean.
-  with warnings.catch_warnings():  # Empty borders become NaN.
-    warnings.simplefilter('ignore', category=RuntimeWarning)
-    scores = np.exp(np.nanmean(np.log(1 + percents), -1)) - 1
-
+def plot_scores(inpaths, outpath, legend, colors, budget=1e6, ylim=None):
+  runs = common.load_runs(inpaths, budget)
+  percents, methods, seeds, tasks = common.compute_success_rates(runs, budget)
+  scores = common.compute_scores(percents)
   if not legend:
     methods = sorted(set(run['method'] for run in runs))
     legend = {x: x.replace('_', ' ').title() for x in methods}
@@ -79,8 +51,8 @@ inpaths = [
     'scores/crafter_reward-dreamerv2.json',
     'scores/crafter_reward-ppo.json',
     'scores/crafter_reward-rainbow.json',
-    'scores/crafter_noreward-unsup_rnd.json',
     'scores/crafter_noreward-unsup_plan2explore.json',
+    'scores/crafter_noreward-unsup_rnd.json',
     'scores/crafter_noreward-random.json',
 ]
 legend = {
@@ -88,8 +60,8 @@ legend = {
     'dreamerv2': 'DreamerV2',
     'ppo': 'PPO',
     'rainbow': 'Rainbow',
-    'unsup_rnd': 'RND\n(Unsup)',
     'unsup_plan2explore': 'Plan2Explore\n(Unsup)',
+    'unsup_rnd': 'RND\n(Unsup)',
     'random': 'Random',
 }
 colors = [
@@ -97,26 +69,26 @@ colors = [
     '#377eb8', '#5fc35d', '#984ea3',
     '#bf3217', '#de9f42', '#6a554d',
 ]
-plot_bars(inpaths, 'results/scores-human.pdf', legend, colors, ylim=100)
+plot_scores(inpaths, 'plots/scores-human.pdf', legend, colors, ylim=100)
 
 inpaths = [
     'scores/crafter_reward-dreamerv2.json',
     'scores/crafter_reward-ppo.json',
     'scores/crafter_reward-rainbow.json',
-    'scores/crafter_noreward-unsup_rnd.json',
     'scores/crafter_noreward-unsup_plan2explore.json',
+    'scores/crafter_noreward-unsup_rnd.json',
     'scores/crafter_noreward-random.json',
 ]
 legend = {
     'dreamerv2': 'DreamerV2',
     'ppo': 'PPO',
     'rainbow': 'Rainbow',
-    'unsup_rnd': 'RND\n(Unsup)',
     'unsup_plan2explore': 'Plan2Explore\n(Unsup)',
+    'unsup_rnd': 'RND\n(Unsup)',
     'random': 'Random',
 }
 colors = [
     '#377eb8', '#5fc35d', '#984ea3',
     '#bf3217', '#de9f42', '#6a554d',
 ]
-plot_bars(inpaths, 'results/scores-agents.pdf', legend, colors, ylim=12)
+plot_scores(inpaths, 'plots/scores-agents.pdf', legend, colors, ylim=12)
