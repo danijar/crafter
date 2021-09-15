@@ -4,19 +4,10 @@
 
 # Crafter
 
-Open world survival environment for reinforcement learning.
+Open world survival game for evaluating a wide range of agent abilities within
+a single environment.
 
 ![Crafter Terrain](https://github.com/danijar/crafter/raw/main/media/terrain.png)
-
-If you find this code useful, please reference in your paper:
-
-```
-@misc{hafner2021crafter,
-  title = {Benchmarking Diverse Agent Capabilities},
-  author = {Danijar Hafner},
-  year = {2021},
-}
-```
 
 ## Overview
 
@@ -34,8 +25,20 @@ reinforcement learning by focusing on the following design goals:
   ability spectrum of both reward agents and unsupervised agents.
 
 - **Iteration speed:** Crafter evaluates many agent abilities within a single
-  environment, vastly reducing the computational requirements over benchmarks
-  suites that require training on many separate environments from scratch.
+  env, vastly reducing the computational requirements over benchmarks suites
+  that require training on many separate envs from scratch.
+
+See the research paper to find out more: [Benchmarking the Spectrum of Agent
+Capabilities](https://arxiv.org/pdf/2109.06780.pdf)
+
+```
+@article{hafner2021crafter,
+  title={Benchmarking the Spectrum of Agent Capabilities},
+  author={Danijar Hafner},
+  year={2021},
+  journal={arXiv preprint arXiv:2109.06780},
+}
+```
 
 ## Play Yourself
 
@@ -96,15 +99,14 @@ while not done:
 
 ## Evaluation
 
-The environmnent defines `CrafterReward-v1` for agents that learn from the
-provided reward and `CrafterNoReward-v1` for unsupervised agents. Agents are
-allowed a budget of 1M environmnent steps and are evaluated by their success
-rates on the 22 achievements and by their geometric mean score. Example scripts
-for computing these are included in the `analysis` directory of the repository.
+Agents are allowed a budget of 1M environmnent steps and are evaluated by their
+success rates of the 22 achievements and by their geometric mean score. Example
+scripts for computing these are included in the `analysis` directory of the
+repository.
 
-- **Reward:** The sparse reward is `+1` for unlocking a new achievement during
-  the episode and `-0.1` or `+0.1` for every lost or regenerated health point.
-  Performance should not be reported as reward but as the score; see below.
+- **Reward:** The sparse reward is `+1` for unlocking an achievement during
+  the episode and `-0.1` or `+0.1` for lost or regenerated health points.
+  Results should be reported not as reward but as success rates and score.
 
 - **Success rates:** The success rates of the 22 achievemnts are computed
   as the percentage across all training episodes in which the achievement was
@@ -112,8 +114,7 @@ for computing these are included in the `analysis` directory of the repository.
 
 - **Crafter score:** The score is the geometric mean of success rates, so that
   improvements on difficult achievements contribute more than improvements on
-  achievements with already high success rates. Please see the paper for
-  details.
+  achievements with already high success rates.
 
 ## Baselines
 
