@@ -123,7 +123,6 @@ class Env(BaseClass):
     canvas = np.zeros(tuple(size) + (3,), np.uint8)
     local_view = self._local_view(self._player, unit)
     item_view = self._item_view(self._player.inventory, unit)
-    view = local_view
     view = np.concatenate([local_view, item_view], 1)
     border = (size - (size // self._view) * self._view) // 2
     (x, y), (w, h) = border, view.shape[:2]
