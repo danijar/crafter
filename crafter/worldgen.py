@@ -81,7 +81,11 @@ def _simplex(simplex, x, y, z, sizes, normalize=True):
     sizes = {sizes: 1}
   value = 0
   for size, weight in sizes.items():
-    value += weight * simplex.noise3d(x / size, y / size, z)
+    if hasattr(simplex, 'noise3d'):
+      noise = simplex.noise3d(x / size, y / size, z)
+    else:
+      noise = simplex.noise3(x / size, y / size, z)
+    value += weight * noise
   if normalize:
     value /= sum(sizes.values())
   return value
