@@ -46,6 +46,9 @@ def compute_success_rates(runs, budget=1e6, sortby=None):
 
 def compute_scores(percents):
   # Geometric mean with an offset of 1%.
+  assert all(0 <= x <= 100 for x in percents)
+  if all(x <= 1.0 for x in percents):
+    print('Warning: The input may not be in the right range.')
   with warnings.catch_warnings():  # Empty seeds become NaN.
     warnings.simplefilter('ignore', category=RuntimeWarning)
     scores = np.exp(np.nanmean(np.log(1 + percents), -1)) - 1
