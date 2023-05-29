@@ -117,6 +117,41 @@ repository.
   improvements on difficult achievements contribute more than improvements on
   achievements with already high success rates.
 
+## Scoreboards
+
+Please create a pull request if you would like to add your or another algorithm
+to the scoreboards. For the reinforcement learning and unsupervised agents
+categories, the interaction budget is 1M. The external knowledge category is
+defined more broadly.
+
+### Reinforcement Learning
+
+| Algorithm | Score (%) | Reward | Open Source |
+|:----------|----------:|-------:|:-----------:|
+| [DreamerV3](https://arxiv.org/pdf/2301.04104v1.pdf) | 14.5±1.6 | 11.7±1.9 | [danijar/dreamerv3](https://github.com/danijar/dreamerv3) |
+| [LSTM-SPCNN](https://arxiv.org/pdf/2208.03374.pdf) | 12.1±0.8 | — | [astanic/crafter-ood](https://github.com/astanic/crafter-ood) |
+| [EDE](https://openreview.net/pdf?id=GZDsKahGY-2) | 11.7±1.0 | — | [yidingjiang/ede](https://github.com/yidingjiang/ede) |
+| [OC-SA](https://arxiv.org/pdf/2208.03374.pdf) | 11.1±0.7 | — | [astanic/crafter-ood](https://github.com/astanic/crafter-ood) |
+| [DreamerV2](https://arxiv.org/pdf/2010.02193.pdf) | 10.0±1.2 | 9.0±1.7 | [danijar/dreamerv2](https://github.com/danijar/dreamerv2) |
+| [PPO](https://arxiv.org/pdf/1710.02298.pdf) | 4.6±0.3 | 4.2±1.2 | [DLR-RM/stable-baselines3](https://github.com/DLR-RM/stable-baselines3) |
+| [Rainbow](https://arxiv.org/pdf/1710.02298.pdf) | 4.3±0.2 | 6.0±1.3 | [Kaixhin/Rainbow](https://github.com/Kaixhin/Rainbow) |
+
+### Unsupervised Agents
+
+| Algorithm | Score (%) | Reward | Open Source |
+|:----------|----------:|-------:|:-----------:|
+| [Plan2Explore](https://arxiv.org/pdf/2010.02193.pdf) | 2.1±0.1 | 2.1±1.5 | [danijar/dreamerv2](https://github.com/danijar/dreamerv2) |
+| [RND](https://arxiv.org/pdf/1810.12894.pdf) | 2.0±0.1 | 0.7±1.3 | [alirezakazemipour/PPO-RND](https://github.com/alirezakazemipour/PPO-RND) |
+| Random | 1.6±0.0 | 2.1±1.3 | — |
+
+### External Knowledge
+
+| Algorithm | Score (%) | Reward | Uses | Interaction | Open Source |
+|:----------|----------:|-------:|:-----|:-----------:|:-----------:|
+| [Human](https://en.wikipedia.org/wiki/Human) | 50.5±6.8 | 14.3±2.3 | Life experience | 0 | [crafter_human_dataset](https://archive.org/details/crafter_human_dataset) |
+| [SPRING](https://arxiv.org/pdf/2305.15486.pdf) | 27.3±1.2 | 12.3±0.7 | LLM, scene description, Crafter paper | 0 | ❌ |
+| [ELLM](https://arxiv.org/pdf/2302.06692.pdf) | — | 6.0±0.4 | LLM, scene description | 5M | ❌ |
+
 ## Baselines
 
 Baseline scores of various agents are available for Crafter, both with and
