@@ -2,7 +2,7 @@ import collections
 import functools
 import pathlib
 
-import imageio
+import imageio.v2 as imageio
 import numpy as np
 from PIL import Image, ImageEnhance
 
