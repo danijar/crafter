@@ -60,9 +60,12 @@ def main():
   size[1] = size[1] or args.window[1]
 
   env = crafter.Env(
-      area=args.area, view=args.view, length=args.length, seed=args.seed)
+      area=args.area, view=args.view, length=args.length)
   env = crafter.Recorder(env, args.record)
-  env.reset()
+
+  seed = args.seed
+
+  env.reset(seed=seed)
   achievements = set()
   duration = 0
   return_ = 0
@@ -108,7 +111,8 @@ def main():
           action = 'noop'
 
     # Environment step.
-    _, reward, done, _ = env.step(env.action_names.index(action))
+    _, reward, terminated, truncated, _ = env.step(env.action_names.index(action))
+    done = terminated or truncated
     duration += 1
 
     # Achievements.
@@ -135,7 +139,8 @@ def main():
         running = False
       if args.death == 'reset':
         print('\nStarting a new episode.')
-        env.reset()
+        seed = hash(seed) % (2 ** 31 - 1)
+        env.reset(seed=seed)
         achievements = set()
         was_done = False
         duration = 0

@@ -2,7 +2,7 @@ from .env import Env
 from .recorder import Recorder
 
 try:
-  import gym
+  import gymnasium as gym
   gym.register(
       id='CrafterReward-v1',
       entry_point='crafter:Env',

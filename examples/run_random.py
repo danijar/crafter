@@ -6,7 +6,10 @@ import tqdm
 parser = argparse.ArgumentParser()
 parser.add_argument('--outdir', default='logdir/crafter_noreward-random/0')
 parser.add_argument('--steps', type=float, default=1e6)
+parser.add_argument('--seed', type=int, default=None)
 args = parser.parse_args()
+
+seed = args.seed
 
 env = crafter.Env()
 env = crafter.Recorder(
@@ -22,8 +25,10 @@ step = 0
 bar = tqdm.tqdm(total=args.steps, smoothing=0)
 while step < args.steps or not done:
   if done:
-    env.reset()
+    seed = hash(seed) % (2 ** 31 - 1)
+    env.reset(seed)
     done = False
-  _, _, done, _ = env.step(action_space.sample())
+  _, _, terminated, truncated, _ = env.step(action_space.sample())
+  done = terminated or truncated
   step += 1
   bar.update(1)
