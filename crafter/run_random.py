@@ -17,6 +17,8 @@ def main():
   parser.add_argument('--episodes', type=int, default=1)
   args = parser.parse_args()
 
+  seed = args.seed
+
   random = np.random.RandomState(args.seed)
   crafter.constants.items['health']['max'] = args.health
   crafter.constants.items['health']['initial'] = args.health
@@ -26,7 +28,8 @@ def main():
   for _ in range(args.episodes):
 
     start = time.time()
-    obs = env.reset()
+    seed = hash(seed) % (2 ** 31 - 1)
+    obs = env.reset(seed=seed)
     print('')
     print(f'Reset time: {1000*(time.time()-start):.2f}ms')
     print('Coal exist:    ', env._world.count('coal'))
@@ -37,7 +40,8 @@ def main():
     done = False
     while not done:
       action = random.randint(0, env.action_space.n)
-      obs, reward, done, info = env.step(action)
+      obs, reward, terminated, truncated, info = env.step(action)
+      done = terminated or truncated
     duration = time.time() - start
     step = env._step
     print(f'Step time: {1000*duration/step:.2f}ms ({int(step/duration)} FPS)')

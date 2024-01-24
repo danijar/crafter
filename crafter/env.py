@@ -10,7 +10,7 @@ from . import worldgen
 
 # Gym is an optional dependency.
 try:
-  import gym
+  import gymnasium as gym
   DiscreteSpace = gym.spaces.Discrete
   BoxSpace = gym.spaces.Box
   DictSpace = gym.spaces.Dict
@@ -36,7 +36,6 @@ class Env(BaseClass):
     self._reward = reward
     self._length = length
     self._seed = seed
-    self._episode = 0
     self._world = engine.World(area, constants.materials, (12, 12))
     self._textures = engine.Textures(constants.root / 'assets')
     item_rows = int(np.ceil(len(constants.items) / view[0]))
@@ -67,18 +66,22 @@ class Env(BaseClass):
   def action_names(self):
     return constants.actions
 
-  def reset(self):
+  def reset(self, seed=None, options={}):
     center = (self._world.area[0] // 2, self._world.area[1] // 2)
-    self._episode += 1
     self._step = 0
-    self._world.reset(seed=hash((self._seed, self._episode)) % (2 ** 31 - 1))
+    if not seed:
+      seed = self._seed
+    if not seed:
+      seed = 0
+    self._world.reset(seed=seed)
     self._update_time()
     self._player = objects.Player(self._world, center)
     self._last_health = self._player.health
     self._world.add(self._player)
     self._unlocked = set()
     worldgen.generate_world(self._world, self._player)
-    return self._obs()
+    info = {"options": options}
+    return self._obs(), info
 
   def step(self, action):
     self._step += 1
@@ -115,7 +118,9 @@ class Env(BaseClass):
     }
     if not self._reward:
       reward = 0.0
-    return obs, reward, done, info
+    terminated = done
+    truncated = False
+    return obs, reward, terminated, truncated, info
 
   def render(self, size=None):
     size = size or self._size

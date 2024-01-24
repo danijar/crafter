@@ -5,8 +5,10 @@ import pathlib
 import imageio
 import numpy as np
 
+import gymnasium
 
-class Recorder:
+
+class Recorder(gymnasium.Env):
 
   def __init__(
       self, env, directory, save_stats=True, save_video=True,
@@ -23,6 +25,12 @@ class Recorder:
     if name.startswith('__'):
       raise AttributeError(name)
     return getattr(self._env, name)
+
+  def reset(self, seed=None, options={}):
+    return self._env.reset(seed, options)
+
+  def step(self, action):
+    return self._env.step(action)
 
 
 class StatsRecorder:
@@ -42,8 +50,8 @@ class StatsRecorder:
       raise AttributeError(name)
     return getattr(self._env, name)
 
-  def reset(self):
-    obs = self._env.reset()
+  def reset(self, seed=None, options={}):
+    obs = self._env.reset(seed=seed, options=options)
     self._length = 0
     self._reward = 0
     self._unlocked = None
@@ -51,7 +59,8 @@ class StatsRecorder:
     return obs
 
   def step(self, action):
-    obs, reward, done, info = self._env.step(action)
+    obs, reward, terminated, truncated, info = self._env.step(action)
+    done = terminated or truncated
     self._length += 1
     self._reward += info['reward']
     if done:
@@ -59,7 +68,7 @@ class StatsRecorder:
       for key, value in info['achievements'].items():
         self._stats[f'achievement_{key}'] = value
       self._save()
-    return obs, reward, done, info
+    return obs, reward, terminated, truncated, info
 
   def _save(self):
     self._file.write(json.dumps(self._stats) + '\n')
@@ -70,7 +79,7 @@ class VideoRecorder:
 
   def __init__(self, env, directory, size=(512, 512)):
     if not hasattr(env, 'episode_name'):
-      env = EpisodeName(env)
+      env = EpisodeName
     self._env = env
     self._directory = pathlib.Path(directory).expanduser()
     self._directory.mkdir(exist_ok=True, parents=True)
@@ -82,17 +91,18 @@ class VideoRecorder:
       raise AttributeError(name)
     return getattr(self._env, name)
 
-  def reset(self):
-    obs = self._env.reset()
+  def reset(self, seed=None, options={}):
+    obs = self._env.reset(seed=seed, options=options)
     self._frames = [self._env.render(self._size)]
     return obs
 
   def step(self, action):
-    obs, reward, done, info = self._env.step(action)
+    obs, reward, terminated, truncated, info = self._env.step(action)
+    done = terminated or truncated
     self._frames.append(self._env.render(self._size))
     if done:
       self._save()
-    return obs, reward, done, info
+    return obs, reward, terminated, truncated, info
 
   def _save(self):
     filename = str(self._directory / (self._env.episode_name + '.mp4'))
@@ -103,7 +113,7 @@ class EpisodeRecorder:
 
   def __init__(self, env, directory):
     if not hasattr(env, 'episode_name'):
-      env = EpisodeName(env)
+      env = EpisodeName
     self._env = env
     self._directory = pathlib.Path(directory).expanduser()
     self._directory.mkdir(exist_ok=True, parents=True)
@@ -114,8 +124,8 @@ class EpisodeRecorder:
       raise AttributeError(name)
     return getattr(self._env, name)
 
-  def reset(self):
-    obs = self._env.reset()
+  def reset(self, seed=None, options={}):
+    obs = self._env.reset(seed=seed, options=options)
     self._episode = [{'image': obs}]
     return obs
 
@@ -123,7 +133,8 @@ class EpisodeRecorder:
     # Transitions are defined from the environment perspective, meaning that a
     # transition contains the action and the resulting reward and next
     # observation produced by the environment in response to said action.
-    obs, reward, done, info = self._env.step(action)
+    obs, reward, terminated, truncated, info = self._env.step(action)
+    done = terminated or truncated
     transition = {
         'action': action, 'image': obs, 'reward': reward, 'done': done,
     }
@@ -138,7 +149,7 @@ class EpisodeRecorder:
     self._episode.append(transition)
     if done:
       self._save()
-    return obs, reward, done, info
+    return obs, reward, terminated, truncated, info
 
   def _save(self):
     filename = str(self._directory / (self._env.episode_name + '.npz'))
@@ -165,20 +176,21 @@ class EpisodeName:
       raise AttributeError(name)
     return getattr(self._env, name)
 
-  def reset(self):
-    obs = self._env.reset()
+  def reset(self, seed=None, options={}):
+    obs = self._env.reset(seed=seed, options=options)
     self._timestamp = None
     self._unlocked = None
     self._length = 0
     return obs
 
   def step(self, action):
-    obs, reward, done, info = self._env.step(action)
+    obs, reward, terminated, truncated, info = self._env.step(action)
+    done = terminated or truncated
     self._length += 1
     if done:
       self._timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
       self._unlocked = sum(int(v >= 1) for v in info['achievements'].values())
-    return obs, reward, done, info
+    return obs, reward, terminated, truncated, info
 
   @property
   def episode_name(self):

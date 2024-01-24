@@ -78,7 +78,7 @@ To install Crafter, run `pip3 install crafter`. The environment follows the
 outputs are one of 17 categorical actions.
 
 ```py
-import gym
+import gymnasium as gym
 import crafter
 
 env = gym.make('CrafterReward-v1')  # Or CrafterNoReward-v1
@@ -93,7 +93,7 @@ obs = env.reset()
 done = False
 while not done:
   action = env.action_space.sample()
-  obs, reward, done, info = env.step(action)
+  obs, reward, terminated, truncated, info = env.step(action)
 ```
 
 [gym]: https://github.com/openai/gym

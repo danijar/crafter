@@ -16,10 +16,13 @@ def main():
   parser.add_argument('--filename', type=str, default='terrain.png')
   args = parser.parse_args()
 
+  seed = args.seed
+
   env = crafter.Env(args.area, args.area, args.size, seed=args.seed)
   images = []
   for index in range(args.amount):
-    images.append(env.reset())
+    seed = hash(seed) % (2 ** 31 - 1)
+    images.append(env.reset(seed))
     diamonds = env._world.count('diamond')
     print(f'Map: {index:>2}, diamonds: {diamonds:>2}')
 
