@@ -206,7 +206,10 @@ class LocalView:
     return (1 - amount) * canvas + amount * color
 
   def _noise(self, canvas, amount, stddev):
-    noise = self._world.random.uniform(32, 127, canvas.shape[:2])[..., None]
+    state = self._world.random.get_state()
+    random = np.random.RandomState()
+    random.set_state(state)
+    noise = random.uniform(32, 127, canvas.shape[:2])[..., None]
     mask = amount * self._vignette(canvas.shape, stddev)[..., None]
     return (1 - mask) * canvas + mask * noise
 

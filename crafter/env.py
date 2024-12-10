@@ -160,6 +160,7 @@ class Env(BaseClass):
     xmin, xmax, ymin, ymax = chunk
     random = self._world.random
     creatures = [obj for obj in objs if isinstance(obj, cls)]
+    creatures.sort(key=(lambda x: tuple(x.pos)))
     mask = self._world.mask(*chunk, material)
     target_min, target_max = target_fn(len(creatures), mask.sum())
     if len(creatures) < int(target_min) and random.uniform() < spawn_prob:
