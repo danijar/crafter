@@ -128,6 +128,7 @@ defined more broadly.
 
 | Algorithm | Score (%) | Reward | Open Source |
 |:----------|----------:|-------:|:-----------:|
+| [HABIS](https://doi.org/10.5281/zenodo.24404728) | 20.5±1.3 | - | ❌ |
 | [Curious Replay](https://arxiv.org/pdf/2306.15934.pdf) | 19.4±1.6 | - | [AutonomousAgentsLab/cr-dv3](https://github.com/AutonomousAgentsLab/cr-dv3) |
 | [PPO (ResNet)](https://arxiv.org/pdf/2307.03486.pdf)| 15.6±1.6 | 10.3±0.5 | [snu-mllab/Achievement-Distillation](https://github.com/snu-mllab/Achievement-Distillation) 
 | [DreamerV3](https://arxiv.org/pdf/2301.04104v1.pdf) | 14.5±1.6 | 11.7±1.9 | [danijar/dreamerv3](https://github.com/danijar/dreamerv3) |
